@@ -11,8 +11,8 @@
     <meta name="apple-mobile-web-app-title" content="雀録">
     
     <!-- 強制読み込み用バージョン付きアイコン設定 -->
-    <link rel="apple-touch-icon" href="icon.png?v=101">
-    <link rel="icon" href="icon.png?v=101">
+    <link rel="apple-touch-icon" href="icon.png?v=102">
+    <link rel="icon" href="icon.png?v=102">
 
     <style>
         :root {
@@ -146,38 +146,43 @@
         /* Rule Config Inputs */
         .rule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         
-        /* ウマのレイアウト修正: 2行2列でコンパクト化 */
-        .uma-grid-4 { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
-            margin-top: 5px; 
+        /* ウマのレイアウト修正（ここを大きく変更） */
+        .uma-wrapper {
+            display: grid;
+            gap: 8px;
+            margin-top: 6px;
         }
-        .uma-grid-3 { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 8px; 
-            margin-top: 5px; 
+        .uma-wrapper.uma-4 {
+            grid-template-columns: repeat(2, 1fr); /* 2行2列 */
         }
-        .uma-item {
-            background: #252525;
-            padding: 6px 10px;
-            border-radius: 8px;
+        .uma-wrapper.uma-3 {
+            grid-template-columns: repeat(3, 1fr); /* 3列 */
+        }
+        .uma-box {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 6px;
+            background: #282828;
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 4px 8px;
         }
-        .uma-item label {
-            margin-bottom: 0;
+        .uma-label {
             font-size: 0.8rem;
             color: var(--accent);
-            white-space: nowrap;
+            font-weight: bold;
+            width: 32px;
+            flex-shrink: 0;
         }
-        .uma-item input {
-            padding: 6px 8px;
-            text-align: center;
+        .uma-box input {
+            border: none;
+            background: transparent;
+            padding: 4px;
+            text-align: right;
             width: 100%;
+            font-size: 0.95rem;
+        }
+        .uma-box input:focus {
+            outline: none;
         }
 
         /* History Accordion */
@@ -215,7 +220,7 @@
 <body>
 
 <header>
-    <img src="icon.png?v=101" class="logo-img" alt="logo" onerror="this.style.display='none'">
+    <img src="icon.png?v=102" class="logo-img" alt="logo" onerror="this.style.display='none'">
     <h1>雀録</h1>
 </header>
 
@@ -377,13 +382,13 @@
         document.getElementById('ruleReturn').value = rule.return;
 
         const umaContainer = document.getElementById('umaContainer');
-        umaContainer.className = state.mode === 4 ? 'uma-grid-4' : 'uma-grid-3';
+        umaContainer.className = `uma-wrapper uma-${state.mode}`;
         
         let html = '';
         for (let i = 0; i < state.mode; i++) {
             html += `
-                <div class="uma-item">
-                    <label>${i + 1}位</label>
+                <div class="uma-box">
+                    <span class="uma-label">${i + 1}位</span>
                     <input type="number" id="uma-${i}" value="${rule.uma[i] !== undefined ? rule.uma[i] : 0}" onchange="updateRuleCustom()">
                 </div>
             `;
