@@ -10,8 +10,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="雀録">
     
-    <!-- iOS Home Screen Icon (?v=2 でiPhoneの強固なキャッシュを強制回避) -->
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3Cfilter id='shadow' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeDropShadow dx='0' dy='6' stdDeviation='6' flood-color='%23000' flood-opacity='0.6'/%3E%3C/filter%3E%3ClinearGradient id='bgGrad' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23122b22'/%3E%3Cstop offset='100%25' stop-color='%23060f0c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' fill='url(%23bgGrad)'/%3E%3Cg filter='url(%23shadow)'%3E%3Cg transform='translate(32, 38) rotate(-10 40 52)'%3E%3Crect width='78' height='104' rx='10' fill='%23faf7f0' stroke='%23d4af37' stroke-width='3'/%3E%3Ctext x='39' y='76' font-family='sans-serif, serif' font-size='66' font-weight='900' fill='%23e53935' text-anchor='middle'%3E中%3C/text%3E%3C/g%3E%3Cg transform='translate(72, 44) rotate(8 40 52)'%3E%3Crect width='78' height='104' rx='10' fill='%23004d40' stroke='%23d4af37' stroke-width='3'/%3E%3Ctext x='39' y='76' font-family='sans-serif, serif' font-size='66' font-weight='900' fill='%23d4af37' text-anchor='middle'%3E發%3C/text%3E%3C/g%3E%3C/g%3E%3C/svg%3E?v=2">
+    <!-- 画像ファイルをアイコンとして読み込む設定 -->
+    <link rel="apple-touch-icon" href="icon.png">
 
     <style>
         :root {
@@ -45,11 +45,11 @@
             justify-content: center;
             gap: 12px;
         }
-        .logo-icon {
+        .logo-img {
             width: 44px;
             height: 44px;
             border-radius: 10px;
-            overflow: hidden;
+            object-fit: cover;
             box-shadow: 0 2px 6px rgba(0,0,0,0.4);
         }
         h1 { margin: 0; font-size: 1.5rem; color: var(--accent); letter-spacing: 2px; }
@@ -137,23 +137,7 @@
 <body>
 
 <header>
-    <svg class="logo-icon" viewBox="0 0 180 180">
-        <defs>
-            <linearGradient id="bgGradHeader" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#122b22"/>
-                <stop offset="100%" stop-color="#060f0c"/>
-            </linearGradient>
-        </defs>
-        <rect width="180" height="180" fill="url(#bgGradHeader)"/>
-        <g transform="translate(32, 38) rotate(-10 40 52)">
-            <rect width="78" height="104" rx="10" fill="#faf7f0" stroke="#d4af37" stroke-width="3"/>
-            <text x="39" y="76" font-family="sans-serif, serif" font-size="66" font-weight="900" fill="#e53935" text-anchor="middle">中</text>
-        </g>
-        <g transform="translate(72, 44) rotate(8 40 52)">
-            <rect width="78" height="104" rx="10" fill="#004d40" stroke="#d4af37" stroke-width="3"/>
-            <text x="39" y="76" font-family="sans-serif, serif" font-size="66" font-weight="900" fill="#d4af37" text-anchor="middle">發</text>
-        </g>
-    </svg>
+    <img src="icon.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
     <h1>雀録</h1>
 </header>
 
