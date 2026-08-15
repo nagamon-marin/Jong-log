@@ -11,8 +11,8 @@
     <meta name="apple-mobile-web-app-title" content="雀録">
     
     <!-- 強制読み込み用バージョン付きアイコン設定 -->
-    <link rel="apple-touch-icon" href="icon.png?v=99">
-    <link rel="icon" href="icon.png?v=99">
+    <link rel="apple-touch-icon" href="icon.png?v=100">
+    <link rel="icon" href="icon.png?v=100">
 
     <style>
         :root {
@@ -71,13 +71,39 @@
         .form-group { margin-bottom: 15px; }
         label { display: block; font-size: 0.85rem; margin-bottom: 5px; color: #bbb; }
         select, input {
-            width: 100%;
             background: #2c2c2c;
             border: 1px solid #444;
             color: #fff;
             padding: 12px;
             border-radius: 8px;
             font-size: 1rem;
+        }
+        select { width: 100%; }
+
+        /* スコア入力用コンテナ (00点固定表示用) */
+        .score-input-wrap {
+            display: flex;
+            align-items: center;
+            background: #2c2c2c;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding-right: 10px;
+        }
+        .score-input-wrap input {
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: right;
+            padding-right: 4px;
+        }
+        .score-input-wrap input:focus {
+            outline: none;
+        }
+        .score-unit {
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 0.95rem;
+            white-space: nowrap;
         }
 
         .btn {
@@ -113,7 +139,7 @@
         .pos-pt { color: var(--success); }
         .neg-pt { color: var(--danger); }
 
-        /* Tabs/Grid for Point Input */
+        /* Grid for Point Input */
         .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .input-item { background: #252525; padding: 10px; border-radius: 8px; }
 
@@ -157,7 +183,7 @@
 <body>
 
 <header>
-    <img src="icon.png?v=99" class="logo-img" alt="logo" onerror="this.style.display='none'">
+    <img src="icon.png?v=100" class="logo-img" alt="logo" onerror="this.style.display='none'">
     <h1>雀録</h1>
 </header>
 
@@ -168,7 +194,7 @@
         <h2>メンバー管理</h2>
         <div id="memberList" style="margin-bottom: 15px;"></div>
         <div class="form-group" style="display: flex; gap: 10px;">
-            <input type="text" id="newMemberName" placeholder="名前を入力">
+            <input type="text" id="newMemberName" placeholder="名前を入力" style="width:100%;">
             <button class="btn" style="width: 80px;" onclick="addMember()">追加</button>
         </div>
     </section>
@@ -185,12 +211,18 @@
         
         <div class="rule-grid">
             <div>
-                <label>配給原点 (配給点)</label>
-                <input type="number" id="ruleStart" onchange="updateRuleCustom()">
+                <label>配給原点</label>
+                <div class="score-input-wrap">
+                    <input type="number" id="ruleStart" onchange="updateRuleCustom()">
+                    <span class="score-unit">00点</span>
+                </div>
             </div>
             <div>
                 <label>返し点</label>
-                <input type="number" id="ruleReturn" onchange="updateRuleCustom()">
+                <div class="score-input-wrap">
+                    <input type="number" id="ruleReturn" onchange="updateRuleCustom()">
+                    <span class="score-unit">00点</span>
+                </div>
             </div>
         </div>
 
@@ -202,13 +234,13 @@
 
     <!-- 3. スコア入力 -->
     <section class="card">
-        <h2>スコア入力</h2>
+        <h2>スコア入力 <span style="font-size:0.75rem; font-weight:normal; color:#aaa;">(例: 250 ➔ 25,000点)</span></h2>
         <div id="scoreInputs" class="grid-inputs">
             <!-- JSで動的に生成 -->
         </div>
         <div style="margin-top: 15px;">
             <div id="totalPointsDisplay" style="text-align: right; font-size: 0.9rem; margin-bottom: 10px;">
-                合計: <span id="currentTotalPoints">0</span> / <span id="targetTotalPoints">100,000</span>
+                合計: <span id="currentTotalPoints">0</span> / <span id="targetTotalPoints">100,000</span> 点
             </div>
             <button class="btn" onclick="saveGame()">この試合を保存する</button>
         </div>
@@ -249,8 +281,8 @@
         history: [], 
         mode: 4,     
         rules: {
-            4: { start: 25000, return: 30000, uma: [30, 10, -10, -30] },
-            3: { start: 35000, return: 40000, uma: [20, 0, -20] }
+            4: { start: 250, return: 300, uma: [30, 10, -10, -30] },
+            3: { start: 350, return: 400, uma: [20, 0, -20] }
         }
     };
 
@@ -321,7 +353,7 @@
         }
         umaContainer.innerHTML = html;
 
-        document.getElementById('targetTotalPoints').innerText = (rule.start * state.mode).toLocaleString();
+        document.getElementById('targetTotalPoints').innerText = (rule.start * 100 * state.mode).toLocaleString();
     }
 
     function renderScoreInputs() {
@@ -347,8 +379,11 @@
 
             div.innerHTML = `
                 <label>${SEATS[i]}</label>
-                <select class="p-name" id="p-name-${i}">${options}</select>
-                <input type="number" class="p-score" id="p-score-${i}" placeholder="持ち点" value="${currentScores[i] || ''}" oninput="calcCurrentTotal()">
+                <select class="p-name" id="p-name-${i}" style="margin-bottom:8px;">${options}</select>
+                <div class="score-input-wrap">
+                    <input type="number" class="p-score" id="p-score-${i}" placeholder="持ち点" value="${currentScores[i] || ''}" oninput="calcCurrentTotal()">
+                    <span class="score-unit">00点</span>
+                </div>
             `;
             container.appendChild(div);
         }
@@ -367,31 +402,35 @@
     function calcCurrentTotal() {
         const scores = document.querySelectorAll('.p-score');
         let sum = 0;
-        scores.forEach(s => sum += (parseInt(s.value) || 0));
+        scores.forEach(s => sum += ((parseInt(s.value) || 0) * 100));
         document.getElementById('currentTotalPoints').innerText = sum.toLocaleString();
         
-        const target = state.rules[state.mode].start * state.mode;
+        const target = state.rules[state.mode].start * 100 * state.mode;
         document.getElementById('currentTotalPoints').style.color = (sum === target) ? 'var(--success)' : 'var(--danger)';
     }
 
     function saveGame() {
         const rule = state.rules[state.mode];
+        const realStart = rule.start * 100;
+        const realReturn = rule.return * 100;
+
         let players = [];
         let totalInputScore = 0;
 
         for (let i = 0; i < state.mode; i++) {
             const name = document.getElementById(`p-name-${i}`).value;
-            const score = parseInt(document.getElementById(`p-score-${i}`).value);
-            if (!name || isNaN(score)) {
+            const inputScore = parseInt(document.getElementById(`p-score-${i}`).value);
+            if (!name || isNaN(inputScore)) {
                 alert('全員の名前とスコアを正しく入力してください');
                 return;
             }
-            players.push({ name, score });
-            totalInputScore += score;
+            const realScore = inputScore * 100;
+            players.push({ name, score: realScore });
+            totalInputScore += realScore;
         }
 
-        if (totalInputScore !== rule.start * state.mode) {
-            if (!confirm(`点数合計が合いません（現在:${totalInputScore}点）。このまま保存しますか？`)) return;
+        if (totalInputScore !== realStart * state.mode) {
+            if (!confirm(`点数合計が合いません（現在:${totalInputScore.toLocaleString()}点）。このまま保存しますか？`)) return;
         }
 
         players.sort((a, b) => b.score - a.score);
@@ -400,7 +439,7 @@
         let ptSum = 0;
 
         players.forEach((p, index) => {
-            let basePt = (p.score - rule.return) / 1000;
+            let basePt = (p.score - realReturn) / 1000;
             let pt = basePt + rule.uma[index];
             gameResults.push({ name: p.name, score: p.score, pt: pt, rank: index + 1 });
             if (index !== 0) ptSum += pt;
