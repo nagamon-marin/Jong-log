@@ -11,8 +11,8 @@
     <meta name="apple-mobile-web-app-title" content="雀録">
     
     <!-- 強制読み込み用バージョン付きアイコン設定 -->
-    <link rel="apple-touch-icon" href="icon.png?v=100">
-    <link rel="icon" href="icon.png?v=100">
+    <link rel="apple-touch-icon" href="icon.png?v=101">
+    <link rel="icon" href="icon.png?v=101">
 
     <style>
         :root {
@@ -145,8 +145,40 @@
 
         /* Rule Config Inputs */
         .rule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .uma-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 5px; }
-        .uma-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 5px; }
+        
+        /* ウマのレイアウト修正: 2行2列でコンパクト化 */
+        .uma-grid-4 { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+            margin-top: 5px; 
+        }
+        .uma-grid-3 { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 8px; 
+            margin-top: 5px; 
+        }
+        .uma-item {
+            background: #252525;
+            padding: 6px 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+        .uma-item label {
+            margin-bottom: 0;
+            font-size: 0.8rem;
+            color: var(--accent);
+            white-space: nowrap;
+        }
+        .uma-item input {
+            padding: 6px 8px;
+            text-align: center;
+            width: 100%;
+        }
 
         /* History Accordion */
         .history-item {
@@ -183,7 +215,7 @@
 <body>
 
 <header>
-    <img src="icon.png?v=100" class="logo-img" alt="logo" onerror="this.style.display='none'">
+    <img src="icon.png?v=101" class="logo-img" alt="logo" onerror="this.style.display='none'">
     <h1>雀録</h1>
 </header>
 
@@ -226,8 +258,8 @@
             </div>
         </div>
 
-        <div style="margin-top: 10px;">
-            <label>ウマ (1位〜順に設定)</label>
+        <div style="margin-top: 12px;">
+            <label>ウマ設定 (pt)</label>
             <div id="umaContainer"></div>
         </div>
     </section>
@@ -345,11 +377,16 @@
         document.getElementById('ruleReturn').value = rule.return;
 
         const umaContainer = document.getElementById('umaContainer');
-        umaContainer.className = state.mode === 4 ? 'uma-grid' : 'uma-grid-3';
+        umaContainer.className = state.mode === 4 ? 'uma-grid-4' : 'uma-grid-3';
         
         let html = '';
         for (let i = 0; i < state.mode; i++) {
-            html += `<input type="number" id="uma-${i}" value="${rule.uma[i] || 0}" onchange="updateRuleCustom()">`;
+            html += `
+                <div class="uma-item">
+                    <label>${i + 1}位</label>
+                    <input type="number" id="uma-${i}" value="${rule.uma[i] !== undefined ? rule.uma[i] : 0}" onchange="updateRuleCustom()">
+                </div>
+            `;
         }
         umaContainer.innerHTML = html;
 
