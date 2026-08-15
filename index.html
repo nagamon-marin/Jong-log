@@ -10,8 +10,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="雀録">
     
-    <!-- 画像ファイルをアイコンとして読み込む設定 -->
-    <link rel="apple-touch-icon" href="icon.png">
+    <!-- 強制読み込み用バージョン付きアイコン設定 -->
+    <link rel="apple-touch-icon" href="icon.png?v=99">
+    <link rel="icon" href="icon.png?v=99">
 
     <style>
         :root {
@@ -121,23 +122,42 @@
         .uma-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 5px; }
         .uma-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 5px; }
 
-        /* History */
+        /* History Accordion */
         .history-item {
             border-bottom: 1px solid #333;
-            padding: 10px 0;
+            padding: 12px 0;
+            cursor: pointer;
+        }
+        .history-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .history-info { font-size: 0.8rem; color: #999; }
-        .history-scores { font-size: 0.9rem; font-weight: bold; }
+        .history-scores { font-size: 0.9rem; font-weight: bold; margin-top: 4px; }
+        .history-details {
+            display: none;
+            margin-top: 10px;
+            background: #282828;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        .history-details.open { display: block; }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            border-bottom: 1px dashed #444;
+        }
+        .detail-row:last-child { border-bottom: none; }
 
     </style>
 </head>
 <body>
 
 <header>
-    <img src="icon.png" class="logo-img" alt="logo" onerror="this.style.display='none'">
+    <img src="icon.png?v=99" class="logo-img" alt="logo" onerror="this.style.display='none'">
     <h1>雀録</h1>
 </header>
 
@@ -214,7 +234,7 @@
 
     <!-- 5. 履歴 -->
     <section class="card">
-        <h2>対局履歴</h2>
+        <h2>対局履歴 <span style="font-size:0.75rem; font-weight:normal; color:#aaa;">(タップで点数表示)</span></h2>
         <div id="historyList"></div>
         <button class="btn btn-outline btn-danger" onclick="resetAllData()">全データをリセット</button>
     </section>
@@ -234,7 +254,6 @@
         }
     };
 
-    // --- ローカルストレージ連携 ---
     function loadData() {
         const saved = localStorage.getItem('mahjong_data');
         if (saved) {
@@ -253,7 +272,6 @@
         renderAll();
     }
 
-    // --- メンバー操作 ---
     function addMember() {
         const input = document.getElementById('newMemberName');
         const name = input.value.trim();
@@ -269,7 +287,6 @@
         saveData();
     }
 
-    // --- ルール設定操作 ---
     function changeMode() {
         state.mode = parseInt(document.getElementById('gameMode').value);
         saveData();
@@ -307,7 +324,6 @@
         document.getElementById('targetTotalPoints').innerText = (rule.start * state.mode).toLocaleString();
     }
 
-    // --- UI描画ロジック ---
     function renderScoreInputs() {
         const container = document.getElementById('scoreInputs');
         
@@ -358,7 +374,6 @@
         document.getElementById('currentTotalPoints').style.color = (sum === target) ? 'var(--success)' : 'var(--danger)';
     }
 
-    // --- 計算・保存 ---
     function saveGame() {
         const rule = state.rules[state.mode];
         let players = [];
@@ -408,6 +423,14 @@
         calcCurrentTotal();
     }
 
+    function toggleDetails(id, event) {
+        if(event.target.classList.contains('remove-btn')) return;
+        const el = document.getElementById(`details-${id}`);
+        if(el) {
+            el.classList.toggle('open');
+        }
+    }
+
     function deleteHistory(id) {
         if (!confirm('この対局結果を削除しますか？')) return;
         state.history = state.history.filter(h => h.id !== id);
@@ -420,7 +443,6 @@
         location.reload();
     }
 
-    // --- レンダリング集約 ---
     function renderAll() {
         const mList = document.getElementById('memberList');
         mList.innerHTML = state.members.map(m => `
@@ -457,14 +479,25 @@
 
         const hList = document.getElementById('historyList');
         hList.innerHTML = state.history.map(h => `
-            <div class="history-item">
-                <div>
-                    <div class="history-info">${h.date} (${h.mode}人麻雀)</div>
-                    <div class="history-scores">
-                        ${h.results.map(r => `${r.name}(${r.pt > 0 ? '+' : ''}${r.pt})`).join(' ')}
+            <div class="history-item" onclick="toggleDetails(${h.id}, event)">
+                <div class="history-header">
+                    <div>
+                        <div class="history-info">${h.date} (${h.mode}人麻雀)</div>
+                        <div class="history-scores">
+                            ${h.results.map(r => `${r.name}(${r.pt > 0 ? '+' : ''}${r.pt})`).join(' ')}
+                        </div>
                     </div>
+                    <div class="remove-btn" onclick="deleteHistory(${h.id})">削除</div>
                 </div>
-                <div class="remove-btn" onclick="deleteHistory(${h.id})">削除</div>
+                <div class="history-details" id="details-${h.id}">
+                    <div style="font-weight:bold; margin-bottom:5px; color:var(--accent);">持ち点内訳:</div>
+                    ${h.results.map(r => `
+                        <div class="detail-row">
+                            <span>${r.rank}位: ${r.name}</span>
+                            <span>${r.score !== undefined ? r.score.toLocaleString() + ' 点' : '記録なし'} (${r.pt > 0 ? '+' : ''}${r.pt}pt)</span>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
         `).join('');
     }
