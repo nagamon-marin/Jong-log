@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>雀録 - Mahjong Score</title>
+    <title>松雀 - Mahjong Score</title>
     
     <!-- PWA & iOS Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="雀録">
+    <meta name="apple-mobile-web-app-title" content="松雀">
     
     <!-- 強制読み込み用バージョン付きアイコン設定 -->
-    <link rel="apple-touch-icon" href="icon.png?v=102">
-    <link rel="icon" href="icon.png?v=102">
+    <link rel="apple-touch-icon" href="icon.png?v=103">
+    <link rel="icon" href="icon.png?v=103">
 
     <style>
         :root {
@@ -146,17 +146,17 @@
         /* Rule Config Inputs */
         .rule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         
-        /* ウマのレイアウト修正（ここを大きく変更） */
+        /* ウマのレイアウト */
         .uma-wrapper {
             display: grid;
             gap: 8px;
             margin-top: 6px;
         }
         .uma-wrapper.uma-4 {
-            grid-template-columns: repeat(2, 1fr); /* 2行2列 */
+            grid-template-columns: repeat(2, 1fr);
         }
         .uma-wrapper.uma-3 {
-            grid-template-columns: repeat(3, 1fr); /* 3列 */
+            grid-template-columns: repeat(3, 1fr);
         }
         .uma-box {
             display: flex;
@@ -220,8 +220,8 @@
 <body>
 
 <header>
-    <img src="icon.png?v=102" class="logo-img" alt="logo" onerror="this.style.display='none'">
-    <h1>雀録</h1>
+    <img src="icon.png?v=103" class="logo-img" alt="logo" onerror="this.style.display='none'">
+    <h1>松雀</h1>
 </header>
 
 <div class="container">
