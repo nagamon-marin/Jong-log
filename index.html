@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>雀録 - Mahjong Score</title>
+    
+    <!-- PWA & iOS Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="雀録">
+    
+    <!-- iOS Home Screen Icon (?v=2 でiPhoneの強固なキャッシュを強制回避) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3Cfilter id='shadow' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeDropShadow dx='0' dy='6' stdDeviation='6' flood-color='%23000' flood-opacity='0.6'/%3E%3C/filter%3E%3ClinearGradient id='bgGrad' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23122b22'/%3E%3Cstop offset='100%25' stop-color='%23060f0c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' fill='url(%23bgGrad)'/%3E%3Cg filter='url(%23shadow)'%3E%3Cg transform='translate(32, 38) rotate(-10 40 52)'%3E%3Crect width='78' height='104' rx='10' fill='%23faf7f0' stroke='%23d4af37' stroke-width='3'/%3E%3Ctext x='39' y='76' font-family='sans-serif, serif' font-size='66' font-weight='900' fill='%23e53935' text-anchor='middle'%3E中%3C/text%3E%3C/g%3E%3Cg transform='translate(72, 44) rotate(8 40 52)'%3E%3Crect width='78' height='104' rx='10' fill='%23004d40' stroke='%23d4af37' stroke-width='3'/%3E%3Ctext x='39' y='76' font-family='sans-serif, serif' font-size='66' font-weight='900' fill='%23d4af37' text-anchor='middle'%3E發%3C/text%3E%3C/g%3E%3C/g%3E%3C/svg%3E?v=2">
+
+    <style>
+        :root {
+            --primary: #004d40; /* 深緑 */
+            --accent: #d4af37;  /* ゴールド */
+            --bg: #121212;
+            --card-bg: #1e1e1e;
+            --text: #e0e0e0;
+            --danger: #cf6679;
+            --success: #03dac6;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding-bottom: 50px;
+            line-height: 1.6;
+        }
+
+        /* Header & Icon */
+        header {
+            background-color: var(--primary);
+            padding: 16px 20px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+        h1 { margin: 0; font-size: 1.5rem; color: var(--accent); letter-spacing: 2px; }
+
+        .container { max-width: 600px; margin: 0 auto; padding: 15px; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        h2 { font-size: 1.1rem; margin-top: 0; border-left: 4px solid var(--accent); padding-left: 10px; }
+
+        /* Forms */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.85rem; margin-bottom: 5px; color: #bbb; }
+        select, input {
+            width: 100%;
+            background: #2c2c2c;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+        }
+        .btn:active { opacity: 0.7; }
+        .btn-outline { background: transparent; color: #bbb; border-color: #444; margin-top: 10px; }
+        .btn-danger { color: var(--danger); border-color: var(--danger); }
+
+        /* Members List */
+        .member-tag {
+            display: inline-block;
+            background: #333;
+            padding: 5px 12px;
+            border-radius: 20px;
+            margin: 0 5px 5px 0;
+            font-size: 0.9rem;
+        }
+        .remove-btn { color: var(--danger); margin-left: 8px; cursor: pointer; }
+
+        /* Score Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+        th, td { padding: 10px; text-align: center; border-bottom: 1px solid #333; }
+        th { color: var(--accent); }
+        .pos-pt { color: var(--success); }
+        .neg-pt { color: var(--danger); }
+
+        /* Tabs/Grid for Point Input */
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .input-item { background: #252525; padding: 10px; border-radius: 8px; }
+
+        /* Rule Config Inputs */
+        .rule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .uma-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 5px; }
+        .uma-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 5px; }
+
+        /* History */
+        .history-item {
+            border-bottom: 1px solid #333;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-info { font-size: 0.8rem; color: #999; }
+        .history-scores { font-size: 0.9rem; font-weight: bold; }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <svg class="logo-icon" viewBox="0 0 180 180">
+        <defs>
+            <linearGradient id="bgGradHeader" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#122b22"/>
+                <stop offset="100%" stop-color="#060f0c"/>
+            </linearGradient>
+        </defs>
+        <rect width="180" height="180" fill="url(#bgGradHeader)"/>
+        <g transform="translate(32, 38) rotate(-10 40 52)">
+            <rect width="78" height="104" rx="10" fill="#faf7f0" stroke="#d4af37" stroke-width="3"/>
+            <text x="39" y="76" font-family="sans-serif, serif" font-size="66" font-weight="900" fill="#e53935" text-anchor="middle">中</text>
+        </g>
+        <g transform="translate(72, 44) rotate(8 40 52)">
+            <rect width="78" height="104" rx="10" fill="#004d40" stroke="#d4af37" stroke-width="3"/>
+            <text x="39" y="76" font-family="sans-serif, serif" font-size="66" font-weight="900" fill="#d4af37" text-anchor="middle">發</text>
+        </g>
+    </svg>
+    <h1>雀録</h1>
+</header>
+
+<div class="container">
+    
+    <!-- 1. メンバー管理 -->
+    <section class="card">
+        <h2>メンバー管理</h2>
+        <div id="memberList" style="margin-bottom: 15px;"></div>
+        <div class="form-group" style="display: flex; gap: 10px;">
+            <input type="text" id="newMemberName" placeholder="名前を入力">
+            <button class="btn" style="width: 80px;" onclick="addMember()">追加</button>
+        </div>
+    </section>
+
+    <!-- 2. ルール設定 -->
+    <section class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>対局設定</h2>
+            <select id="gameMode" style="width: auto;" onchange="changeMode()">
+                <option value="4">四人麻雀</option>
+                <option value="3">三人麻雀</option>
+            </select>
+        </div>
+        
+        <div class="rule-grid">
+            <div>
+                <label>配給原点 (配給点)</label>
+                <input type="number" id="ruleStart" onchange="updateRuleCustom()">
+            </div>
+            <div>
+                <label>返し点</label>
+                <input type="number" id="ruleReturn" onchange="updateRuleCustom()">
+            </div>
+        </div>
+
+        <div style="margin-top: 10px;">
+            <label>ウマ (1位〜順に設定)</label>
+            <div id="umaContainer"></div>
+        </div>
+    </section>
+
+    <!-- 3. スコア入力 -->
+    <section class="card">
+        <h2>スコア入力</h2>
+        <div id="scoreInputs" class="grid-inputs">
+            <!-- JSで動的に生成 -->
+        </div>
+        <div style="margin-top: 15px;">
+            <div id="totalPointsDisplay" style="text-align: right; font-size: 0.9rem; margin-bottom: 10px;">
+                合計: <span id="currentTotalPoints">0</span> / <span id="targetTotalPoints">100,000</span>
+            </div>
+            <button class="btn" onclick="saveGame()">この試合を保存する</button>
+        </div>
+    </section>
+
+    <!-- 4. トータル成績 -->
+    <section class="card">
+        <h2>トータル成績</h2>
+        <div style="overflow-x: auto;">
+            <table id="statsTable">
+                <thead>
+                    <tr>
+                        <th>名前</th>
+                        <th>対局数</th>
+                        <th>累計pt</th>
+                        <th>平均順位</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- 5. 履歴 -->
+    <section class="card">
+        <h2>対局履歴</h2>
+        <div id="historyList"></div>
+        <button class="btn btn-outline btn-danger" onclick="resetAllData()">全データをリセット</button>
+    </section>
+
+</div>
+
+<script>
+    const SEATS = ['東家', '南家', '西家', '北家'];
+
+    let state = {
+        members: [], 
+        history: [], 
+        mode: 4,     
+        rules: {
+            4: { start: 25000, return: 30000, uma: [30, 10, -10, -30] },
+            3: { start: 35000, return: 40000, uma: [20, 0, -20] }
+        }
+    };
+
+    // --- ローカルストレージ連携 ---
+    function loadData() {
+        const saved = localStorage.getItem('mahjong_data');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.rules) state.rules = parsed.rules;
+            if (parsed.members) state.members = parsed.members;
+            if (parsed.history) state.history = parsed.history;
+            if (parsed.mode) state.mode = parsed.mode;
+        }
+        document.getElementById('gameMode').value = state.mode;
+        renderAll();
+    }
+
+    function saveData() {
+        localStorage.setItem('mahjong_data', JSON.stringify(state));
+        renderAll();
+    }
+
+    // --- メンバー操作 ---
+    function addMember() {
+        const input = document.getElementById('newMemberName');
+        const name = input.value.trim();
+        if (!name) return;
+        state.members.push({ id: Date.now(), name: name });
+        input.value = '';
+        saveData();
+    }
+
+    function removeMember(id) {
+        if (!confirm('このメンバーを削除しますか？（成績データは残ります）')) return;
+        state.members = state.members.filter(m => m.id !== id);
+        saveData();
+    }
+
+    // --- ルール設定操作 ---
+    function changeMode() {
+        state.mode = parseInt(document.getElementById('gameMode').value);
+        saveData();
+    }
+
+    function updateRuleCustom() {
+        const mode = state.mode;
+        const start = parseInt(document.getElementById('ruleStart').value) || 0;
+        const ret = parseInt(document.getElementById('ruleReturn').value) || 0;
+        
+        let uma = [];
+        for (let i = 0; i < mode; i++) {
+            const val = parseFloat(document.getElementById(`uma-${i}`).value) || 0;
+            uma.push(val);
+        }
+
+        state.rules[mode] = { start: start, return: ret, uma: uma };
+        saveData();
+    }
+
+    function syncRuleUI() {
+        const rule = state.rules[state.mode];
+        document.getElementById('ruleStart').value = rule.start;
+        document.getElementById('ruleReturn').value = rule.return;
+
+        const umaContainer = document.getElementById('umaContainer');
+        umaContainer.className = state.mode === 4 ? 'uma-grid' : 'uma-grid-3';
+        
+        let html = '';
+        for (let i = 0; i < state.mode; i++) {
+            html += `<input type="number" id="uma-${i}" value="${rule.uma[i] || 0}" onchange="updateRuleCustom()">`;
+        }
+        umaContainer.innerHTML = html;
+
+        document.getElementById('targetTotalPoints').innerText = (rule.start * state.mode).toLocaleString();
+    }
+
+    // --- UI描画ロジック ---
+    function renderScoreInputs() {
+        const container = document.getElementById('scoreInputs');
+        
+        const currentSelections = [];
+        const currentScores = [];
+        for (let i = 0; i < state.mode; i++) {
+            const sel = document.getElementById(`p-name-${i}`);
+            const sc = document.getElementById(`p-score-${i}`);
+            currentSelections.push(sel ? sel.value : '');
+            currentScores.push(sc ? sc.value : '');
+        }
+
+        container.innerHTML = '';
+        
+        for (let i = 0; i < state.mode; i++) {
+            const div = document.createElement('div');
+            div.className = 'input-item';
+            
+            let options = state.members.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+            if (state.members.length === 0) options = '<option value="">(メンバー未登録)</option>';
+
+            div.innerHTML = `
+                <label>${SEATS[i]}</label>
+                <select class="p-name" id="p-name-${i}">${options}</select>
+                <input type="number" class="p-score" id="p-score-${i}" placeholder="持ち点" value="${currentScores[i] || ''}" oninput="calcCurrentTotal()">
+            `;
+            container.appendChild(div);
+        }
+
+        for (let i = 0; i < state.mode; i++) {
+            const sel = document.getElementById(`p-name-${i}`);
+            if (currentSelections[i] && Array.from(sel.options).some(o => o.value === currentSelections[i])) {
+                sel.value = currentSelections[i];
+            } else if (sel.options[i]) {
+                sel.selectedIndex = i;
+            }
+        }
+        calcCurrentTotal();
+    }
+
+    function calcCurrentTotal() {
+        const scores = document.querySelectorAll('.p-score');
+        let sum = 0;
+        scores.forEach(s => sum += (parseInt(s.value) || 0));
+        document.getElementById('currentTotalPoints').innerText = sum.toLocaleString();
+        
+        const target = state.rules[state.mode].start * state.mode;
+        document.getElementById('currentTotalPoints').style.color = (sum === target) ? 'var(--success)' : 'var(--danger)';
+    }
+
+    // --- 計算・保存 ---
+    function saveGame() {
+        const rule = state.rules[state.mode];
+        let players = [];
+        let totalInputScore = 0;
+
+        for (let i = 0; i < state.mode; i++) {
+            const name = document.getElementById(`p-name-${i}`).value;
+            const score = parseInt(document.getElementById(`p-score-${i}`).value);
+            if (!name || isNaN(score)) {
+                alert('全員の名前とスコアを正しく入力してください');
+                return;
+            }
+            players.push({ name, score });
+            totalInputScore += score;
+        }
+
+        if (totalInputScore !== rule.start * state.mode) {
+            if (!confirm(`点数合計が合いません（現在:${totalInputScore}点）。このまま保存しますか？`)) return;
+        }
+
+        players.sort((a, b) => b.score - a.score);
+
+        let gameResults = [];
+        let ptSum = 0;
+
+        players.forEach((p, index) => {
+            let basePt = (p.score - rule.return) / 1000;
+            let pt = basePt + rule.uma[index];
+            gameResults.push({ name: p.name, score: p.score, pt: pt, rank: index + 1 });
+            if (index !== 0) ptSum += pt;
+        });
+
+        gameResults[0].pt = Math.round((0 - ptSum) * 10) / 10;
+
+        const historyItem = {
+            id: Date.now(),
+            date: new Date().toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            mode: state.mode,
+            results: gameResults
+        };
+
+        state.history.unshift(historyItem);
+        saveData();
+        alert('保存しました');
+        
+        document.querySelectorAll('.p-score').forEach(input => input.value = '');
+        calcCurrentTotal();
+    }
+
+    function deleteHistory(id) {
+        if (!confirm('この対局結果を削除しますか？')) return;
+        state.history = state.history.filter(h => h.id !== id);
+        saveData();
+    }
+
+    function resetAllData() {
+        if (!confirm('全てのデータ（メンバー・履歴）を削除しますか？')) return;
+        localStorage.removeItem('mahjong_data');
+        location.reload();
+    }
+
+    // --- レンダリング集約 ---
+    function renderAll() {
+        const mList = document.getElementById('memberList');
+        mList.innerHTML = state.members.map(m => `
+            <span class="member-tag">${m.name}<span class="remove-btn" onclick="removeMember(${m.id})">×</span></span>
+        `).join('');
+
+        syncRuleUI();
+        renderScoreInputs();
+
+        const statsBody = document.querySelector('#statsTable tbody');
+        const stats = {};
+        
+        state.history.forEach(h => {
+            h.results.forEach(r => {
+                if (!stats[r.name]) stats[r.name] = { count: 0, pt: 0, rankSum: 0 };
+                stats[r.name].count++;
+                stats[r.name].pt += r.pt;
+                stats[r.name].rankSum += r.rank;
+            });
+        });
+
+        const sortedStats = Object.keys(stats).sort((a, b) => stats[b].pt - stats[a].pt);
+        statsBody.innerHTML = sortedStats.map(name => {
+            const s = stats[name];
+            return `
+                <tr>
+                    <td>${name}</td>
+                    <td>${s.count}</td>
+                    <td class="${s.pt >= 0 ? 'pos-pt' : 'neg-pt'}">${s.pt.toFixed(1)}</td>
+                    <td>${(s.rankSum / s.count).toFixed(2)}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const hList = document.getElementById('historyList');
+        hList.innerHTML = state.history.map(h => `
+            <div class="history-item">
+                <div>
+                    <div class="history-info">${h.date} (${h.mode}人麻雀)</div>
+                    <div class="history-scores">
+                        ${h.results.map(r => `${r.name}(${r.pt > 0 ? '+' : ''}${r.pt})`).join(' ')}
+                    </div>
+                </div>
+                <div class="remove-btn" onclick="deleteHistory(${h.id})">削除</div>
+            </div>
+        `).join('');
+    }
+
+    window.onload = () => {
+        loadData();
+    };
+</script>
+
+</body>
+</html>
