@@ -329,6 +329,23 @@
         }
         .uma-box input:focus { outline: none; }
 
+        .yakitori-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #ffb74d;
+            cursor: pointer;
+            user-select: none;
+        }
+        .yakitori-toggle input {
+            width: 16px;
+            height: 16px;
+            accent-color: #ff9800;
+            cursor: pointer;
+        }
+
         .history-item {
             border-bottom: 1px solid #333;
             padding: 12px 0;
@@ -427,14 +444,31 @@
             </div>
         </div>
 
+        <div class="rule-grid" style="margin-top: 12px;">
+            <div>
+                <label>端数処理（pt）</label>
+                <select id="roundingMode" onchange="updateRuleCustom()">
+                    <option value="56">五捨六入 (Mリーグ・標準)</option>
+                    <option value="45">四捨五入</option>
+                    <option value="down">切り捨て</option>
+                    <option value="up">切り上げ</option>
+                    <option value="none">小数点を残す</option>
+                </select>
+            </div>
+            <div>
+                <label>ヤキトリペナルティ</label>
+                <div class="score-input-wrap">
+                    <input type="number" id="ruleYakitori" onchange="updateRuleCustom()" placeholder="10">
+                    <span class="score-unit">pt</span>
+                </div>
+            </div>
+        </div>
+
         <div style="margin-top: 12px;">
-            <label>百の位の端数処理（pt切り上げ/切り捨て等）</label>
-            <select id="roundingMode" onchange="updateRuleCustom()">
-                <option value="56">五捨六入 (Mリーグ・標準)</option>
-                <option value="45">四捨五入</option>
-                <option value="down">切り捨て</option>
-                <option value="up">切り上げ</option>
-                <option value="none">小数点をそのまま残す</option>
+            <label>ヤキトリ精算方式</label>
+            <select id="ruleYakitoriMode" onchange="updateRuleCustom()">
+                <option value="split">各プレイヤーに分配（一人あたり設定ptを全員へ支払う）</option>
+                <option value="top">1位が総取り（対象者の合計額をトップへ）</option>
             </select>
         </div>
 
@@ -492,8 +526,8 @@
         history: [], 
         mode: 4,     
         rules: {
-            4: { start: 250, return: 300, uma: [30, 10, -10, -30], rounding: '56' },
-            3: { start: 350, return: 400, uma: [20, 0, -20], rounding: '56' }
+            4: { start: 250, return: 300, uma: [30, 10, -10, -30], rounding: '56', yakitori: 10, yakitoriMode: 'split' },
+            3: { start: 350, return: 400, uma: [20, 0, -20], rounding: '56', yakitori: 10, yakitoriMode: 'split' }
         }
     };
 
@@ -505,6 +539,10 @@
                 state.rules = parsed.rules;
                 if (!state.rules[4].rounding) state.rules[4].rounding = '56';
                 if (!state.rules[3].rounding) state.rules[3].rounding = '56';
+                if (state.rules[4].yakitori === undefined) state.rules[4].yakitori = 10;
+                if (state.rules[3].yakitori === undefined) state.rules[3].yakitori = 10;
+                if (!state.rules[4].yakitoriMode) state.rules[4].yakitoriMode = 'split';
+                if (!state.rules[3].yakitoriMode) state.rules[3].yakitoriMode = 'split';
             }
             if (parsed.members) state.members = parsed.members;
             if (parsed.history) state.history = parsed.history;
@@ -544,6 +582,8 @@
         const start = parseInt(document.getElementById('ruleStart').value) || 0;
         const ret = parseInt(document.getElementById('ruleReturn').value) || 0;
         const rounding = document.getElementById('roundingMode').value;
+        const yakitori = parseFloat(document.getElementById('ruleYakitori').value) || 0;
+        const yakitoriMode = document.getElementById('ruleYakitoriMode').value;
         
         let uma = [];
         for (let i = 0; i < mode; i++) {
@@ -551,7 +591,7 @@
             uma.push(val);
         }
 
-        state.rules[mode] = { start: start, return: ret, uma: uma, rounding: rounding };
+        state.rules[mode] = { start: start, return: ret, uma: uma, rounding: rounding, yakitori: yakitori, yakitoriMode: yakitoriMode };
         saveData();
     }
 
@@ -560,6 +600,8 @@
         document.getElementById('ruleStart').value = rule.start;
         document.getElementById('ruleReturn').value = rule.return;
         document.getElementById('roundingMode').value = rule.rounding || '56';
+        document.getElementById('ruleYakitori').value = rule.yakitori !== undefined ? rule.yakitori : 10;
+        document.getElementById('ruleYakitoriMode').value = rule.yakitoriMode || 'split';
 
         const umaContainer = document.getElementById('umaContainer');
         umaContainer.className = `uma-wrapper uma-${state.mode}`;
@@ -583,11 +625,14 @@
         
         const currentSelections = [];
         const currentScores = [];
+        const currentYakitori = [];
         for (let i = 0; i < state.mode; i++) {
             const sel = document.getElementById(`p-name-${i}`);
             const sc = document.getElementById(`p-score-${i}`);
+            const yk = document.getElementById(`p-yakitori-${i}`);
             currentSelections.push(sel ? sel.value : '');
             currentScores.push(sc ? sc.value : '');
+            currentYakitori.push(yk ? yk.checked : false);
         }
 
         container.innerHTML = '';
@@ -606,6 +651,10 @@
                     <input type="number" class="p-score" id="p-score-${i}" placeholder="持ち点" value="${currentScores[i] || ''}" oninput="calcCurrentTotal()">
                     <span class="score-unit">00点</span>
                 </div>
+                <label class="yakitori-toggle">
+                    <input type="checkbox" id="p-yakitori-${i}" ${currentYakitori[i] ? 'checked' : ''}>
+                    🍗 ヤキトリ
+                </label>
             `;
             container.appendChild(div);
         }
@@ -631,30 +680,28 @@
         document.getElementById('currentTotalPoints').style.color = (sum === target) ? 'var(--success)' : 'var(--danger)';
     }
 
-    // 百の位の端数処理関数（2,3,4位用）
     function applyRounding(rawPt, mode) {
         if (mode === 'none') {
             return Math.round(rawPt * 10) / 10;
         }
 
-        // JSの浮動小数点誤差を補正 (例: 0.50000000001 または 0.49999999999 対策)
         const val = Math.round(rawPt * 1000000) / 1000000;
         const sign = val < 0 ? -1 : 1;
         const absVal = Math.abs(val);
 
-        if (mode === 'down') { // 切り捨て
+        if (mode === 'down') {
             return Math.floor(absVal) * sign;
         }
         
-        if (mode === 'up') { // 切り上げ
+        if (mode === 'up') {
             return Math.ceil(absVal) * sign;
         }
 
-        if (mode === '45') { // 四捨五入 (0.5以上は絶対値方向に繰り上げ)
+        if (mode === '45') {
             return Math.floor(absVal + 0.5) * sign;
         }
 
-        if (mode === '56') { // 五捨六入 (0.6以上で絶対値方向に繰り上げ)
+        if (mode === '56') {
             return Math.floor(absVal + 0.4) * sign;
         }
 
@@ -666,6 +713,8 @@
         const realStart = rule.start * 100;
         const realReturn = rule.return * 100;
         const roundingMode = rule.rounding || '56';
+        const yakitoriPenalty = rule.yakitori !== undefined ? rule.yakitori : 10;
+        const yakitoriMode = rule.yakitoriMode || 'split';
 
         let players = [];
         let totalInputScore = 0;
@@ -673,12 +722,14 @@
         for (let i = 0; i < state.mode; i++) {
             const name = document.getElementById(`p-name-${i}`).value;
             const inputScore = parseInt(document.getElementById(`p-score-${i}`).value);
+            const isYakitori = document.getElementById(`p-yakitori-${i}`).checked;
+
             if (!name || isNaN(inputScore)) {
                 alert('全員の名前とスコアを正しく入力してください');
                 return;
             }
             const realScore = inputScore * 100;
-            players.push({ name, score: realScore });
+            players.push({ name, score: realScore, isYakitori });
             totalInputScore += realScore;
         }
 
@@ -689,27 +740,46 @@
         // 順位順にソート (スコアの高い順)
         players.sort((a, b) => b.score - a.score);
 
+        // ヤキトリ人数のカウント
+        const yakitoriCount = players.filter(p => p.isYakitori).length;
+
         let gameResults = [];
         let nonTopPtSum = 0;
 
-        // 2位以下に【設定の端数処理】を適用してポイント計算
+        // 2位以下に【端数処理】および【ヤキトリペナルティ】を適用
         for (let index = 1; index < players.length; index++) {
             const p = players[index];
             let rawPt = ((p.score - realReturn) / 1000) + rule.uma[index];
             let roundedPt = applyRounding(rawPt, roundingMode);
             
-            gameResults.push({ name: p.name, score: p.score, pt: roundedPt, rank: index + 1 });
+            // ヤキトリ計算ロジックの分岐
+            if (yakitoriMode === 'split') {
+                // 分配方式：ヤキトリ対象者は（他プレイヤー人数×ペナルティpt）を支払う
+                // ヤキトリでない人は、ヤキトリ対象者全員から一人あたりペナルティptを受け取る
+                if (p.isYakitori) {
+                    roundedPt -= (yakitoriPenalty * (state.mode - 1));
+                } else {
+                    roundedPt += (yakitoriPenalty * yakitoriCount);
+                }
+            } else {
+                // トップ総取り方式：ヤキトリ対象者のみがペナルティ分マイナス
+                if (p.isYakitori) {
+                    roundedPt -= yakitoriPenalty;
+                }
+            }
+
+            gameResults.push({ name: p.name, score: p.score, pt: roundedPt, rank: index + 1, isYakitori: p.isYakitori });
             nonTopPtSum += roundedPt;
         }
 
-        // 1位（トップ）は設定処理を行わず、全員の合計が±0になるよう調整計算
+        // 1位（トップ）は全員の合計が±0になるよう調整
         const topPlayer = players[0];
         let topPt = 0 - nonTopPtSum;
         if (roundingMode === 'none') {
             topPt = Math.round(topPt * 10) / 10;
         }
 
-        gameResults.unshift({ name: topPlayer.name, score: topPlayer.score, pt: topPt, rank: 1 });
+        gameResults.unshift({ name: topPlayer.name, score: topPlayer.score, pt: topPt, rank: 1, isYakitori: topPlayer.isYakitori });
 
         const historyItem = {
             id: Date.now(),
@@ -723,6 +793,7 @@
         alert('保存しました');
         
         document.querySelectorAll('.p-score').forEach(input => input.value = '');
+        document.querySelectorAll('.yakitori-toggle input').forEach(input => input.checked = false);
         calcCurrentTotal();
     }
 
@@ -798,7 +869,7 @@
                     <div>
                         <div class="history-info">${h.date} (${h.mode}人麻雀)</div>
                         <div class="history-scores">
-                            ${h.results.map(r => `${r.name}(${r.pt > 0 ? '+' : ''}${r.pt})`).join(' ')}
+                            ${h.results.map(r => `${r.name}(${r.pt > 0 ? '+' : ''}${r.pt})${r.isYakitori ? '🍗' : ''}`).join(' ')}
                         </div>
                     </div>
                     <div class="remove-btn" onclick="deleteHistory(${h.id})">削除</div>
@@ -807,7 +878,7 @@
                     <div style="font-weight:bold; margin-bottom:5px; color:var(--accent);">持ち点内訳:</div>
                     ${h.results.map(r => `
                         <div class="detail-row">
-                            <span>${r.rank}位: ${r.name}</span>
+                            <span>${r.rank}位: ${r.name} ${r.isYakitori ? '🍗(ヤキトリ)' : ''}</span>
                             <span>${r.score !== undefined ? r.score.toLocaleString() + ' 点' : '記録なし'} (${r.pt > 0 ? '+' : ''}${r.pt}pt)</span>
                         </div>
                     `).join('')}
