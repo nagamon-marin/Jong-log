@@ -375,6 +375,15 @@
         }
         .detail-row:last-child { border-bottom: none; }
 
+        .tournament-badge {
+            background: var(--primary);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            margin-left: 6px;
+        }
     </style>
 </head>
 <body>
@@ -407,6 +416,22 @@
 
 <div class="container">
     
+    <!-- 🏆 大会（イベント）設定 -->
+    <section class="card">
+        <h2>大会・イベント管理</h2>
+        <div class="form-group">
+            <label>選択中の大会</label>
+            <select id="currentTournamentSelect" onchange="changeTournament()">
+                <!-- JSで動的生成 -->
+            </select>
+        </div>
+        <div class="form-group" style="display: flex; gap: 10px;">
+            <input type="text" id="newTournamentName" placeholder="新しい大会名を入力" style="width:100%;">
+            <button class="btn" style="width: 100px;" onclick="addTournament()">作成</button>
+        </div>
+        <button class="btn btn-outline btn-danger" style="padding: 6px; font-size: 0.8rem;" onclick="deleteTournament()">選択中の大会を削除</button>
+    </section>
+
     <!-- 1. メンバー管理 -->
     <section class="card">
         <h2>メンバー管理</h2>
@@ -492,7 +517,7 @@
 
     <!-- 4. トータル成績 -->
     <section class="card">
-        <h2>トータル成績</h2>
+        <h2>トータル成績 <span id="statsTournamentName" style="font-size: 0.8rem; font-weight: normal; color: var(--accent);"></span></h2>
         <div style="overflow-x: auto;">
             <table id="statsTable">
                 <thead>
@@ -522,6 +547,11 @@
     const SEATS = ['東家', '南家', '西家', '北家'];
 
     let state = {
+        tournaments: [
+            { id: 'all', name: '全対局（指定なし）' },
+            { id: 1, name: '第1回 松雀杯' }
+        ],
+        currentTournamentId: 1,
         members: [], 
         history: [], 
         mode: 4,     
@@ -535,6 +565,8 @@
         const saved = localStorage.getItem('mahjong_data');
         if (saved) {
             const parsed = JSON.parse(saved);
+            if (parsed.tournaments) state.tournaments = parsed.tournaments;
+            if (parsed.currentTournamentId !== undefined) state.currentTournamentId = parsed.currentTournamentId;
             if (parsed.rules) {
                 state.rules = parsed.rules;
                 if (!state.rules[4].rounding) state.rules[4].rounding = '56';
@@ -557,6 +589,44 @@
         renderAll();
     }
 
+    /* --- 大会管理 --- */
+    function addTournament() {
+        const input = document.getElementById('newTournamentName');
+        const name = input.value.trim();
+        if (!name) return;
+        const newId = Date.now();
+        state.tournaments.push({ id: newId, name: name });
+        state.currentTournamentId = newId;
+        input.value = '';
+        saveData();
+    }
+
+    function changeTournament() {
+        const sel = document.getElementById('currentTournamentSelect');
+        const val = sel.value;
+        state.currentTournamentId = val === 'all' ? 'all' : parseInt(val);
+        saveData();
+    }
+
+    function deleteTournament() {
+        if (state.currentTournamentId === 'all') {
+            alert('「全対局（指定なし）」は削除できません');
+            return;
+        }
+        const t = state.tournaments.find(x => x.id === state.currentTournamentId);
+        if (!confirm(`大会「${t.name}」を削除しますか？\n（対局履歴の大会設定は未指定になります）`)) return;
+
+        state.history.forEach(h => {
+            if (h.tournamentId === state.currentTournamentId) {
+                h.tournamentId = 'all';
+            }
+        });
+        state.tournaments = state.tournaments.filter(x => x.id !== state.currentTournamentId);
+        state.currentTournamentId = 'all';
+        saveData();
+    }
+
+    /* --- メンバー管理 --- */
     function addMember() {
         const input = document.getElementById('newMemberName');
         const name = input.value.trim();
@@ -752,17 +822,13 @@
             let rawPt = ((p.score - realReturn) / 1000) + rule.uma[index];
             let roundedPt = applyRounding(rawPt, roundingMode);
             
-            // ヤキトリ計算ロジックの分岐
             if (yakitoriMode === 'split') {
-                // 分配方式：ヤキトリ対象者は（他プレイヤー人数×ペナルティpt）を支払う
-                // ヤキトリでない人は、ヤキトリ対象者全員から一人あたりペナルティptを受け取る
                 if (p.isYakitori) {
                     roundedPt -= (yakitoriPenalty * (state.mode - 1));
                 } else {
                     roundedPt += (yakitoriPenalty * yakitoriCount);
                 }
             } else {
-                // トップ総取り方式：ヤキトリ対象者のみがペナルティ分マイナス
                 if (p.isYakitori) {
                     roundedPt -= yakitoriPenalty;
                 }
@@ -783,6 +849,7 @@
 
         const historyItem = {
             id: Date.now(),
+            tournamentId: state.currentTournamentId,
             date: new Date().toLocaleString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
             mode: state.mode,
             results: gameResults
@@ -812,16 +879,32 @@
     }
 
     function resetAllData() {
-        if (!confirm('全てのデータ（メンバー・履歴）を削除しますか？')) return;
+        if (!confirm('全てのデータ（大会・メンバー・履歴）を削除しますか？')) return;
         localStorage.removeItem('mahjong_data');
         location.reload();
     }
 
     function renderAll() {
-        const totalGamesCount = state.history.length;
+        // 大会セレクトボックスの更新
+        const tSelect = document.getElementById('currentTournamentSelect');
+        tSelect.innerHTML = state.tournaments.map(t => 
+            `<option value="${t.id}" ${t.id === state.currentTournamentId ? 'selected' : ''}>${t.name}</option>`
+        ).join('');
+
+        // トータル成績の見出し変更
+        const currentT = state.tournaments.find(t => t.id === state.currentTournamentId);
+        document.getElementById('statsTournamentName').innerText = currentT ? `[ ${currentT.name} ]` : '';
+
+        // 選択された大会の対局のみフィルタリングして集計（'all' の場合は全対局）
+        const filteredHistory = state.history.filter(h => {
+            if (state.currentTournamentId === 'all') return true;
+            return h.tournamentId === state.currentTournamentId;
+        });
+
+        const totalGamesCount = filteredHistory.length;
 
         const stats = {};
-        state.history.forEach(h => {
+        filteredHistory.forEach(h => {
             h.results.forEach(r => {
                 if (!stats[r.name]) stats[r.name] = { count: 0, pt: 0, rankSum: 0 };
                 stats[r.name].count++;
@@ -830,6 +913,7 @@
             });
         });
 
+        // 全体の履歴数を基準にメンバーの参加数を表示
         const mList = document.getElementById('memberList');
         mList.innerHTML = state.members.map(m => {
             const memberCount = stats[m.name] ? stats[m.name].count : 0;
@@ -862,12 +946,20 @@
             `;
         }).join('');
 
+        // 対局履歴の表示
         const hList = document.getElementById('historyList');
-        hList.innerHTML = state.history.map(h => `
+        hList.innerHTML = state.history.map(h => {
+            const tObj = state.tournaments.find(t => t.id === h.tournamentId);
+            const tName = tObj ? tObj.name : '全対局（指定なし）';
+            
+            return `
             <div class="history-item" onclick="toggleDetails(${h.id}, event)">
                 <div class="history-header">
                     <div>
-                        <div class="history-info">${h.date} (${h.mode}人麻雀)</div>
+                        <div class="history-info">
+                            ${h.date} (${h.mode}人麻雀)
+                            <span class="tournament-badge">${tName}</span>
+                        </div>
                         <div class="history-scores">
                             ${h.results.map(r => `${r.name}(${r.pt > 0 ? '+' : ''}${r.pt})${r.isYakitori ? '🍗' : ''}`).join(' ')}
                         </div>
@@ -884,7 +976,7 @@
                     `).join('')}
                 </div>
             </div>
-        `).join('');
+        `}).join('');
     }
 
     window.onload = () => {
