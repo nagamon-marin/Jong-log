@@ -854,6 +854,7 @@
 
         let players = [];
         let totalInputScore = 0;
+        let selectedNames = [];
 
         for (let i = 0; i < state.mode; i++) {
             const name = document.getElementById(`p-name-${i}`).value;
@@ -864,9 +865,19 @@
                 alert('全員の名前とスコアを正しく入力してください');
                 return;
             }
+            
+            selectedNames.push(name);
             const realScore = inputScore * 100;
             players.push({ name, score: realScore, isYakitori });
             totalInputScore += realScore;
+        }
+
+        // ⚠️ 重複プレイヤーの判定
+        const duplicates = selectedNames.filter((item, index) => selectedNames.indexOf(item) !== index);
+        if (duplicates.length > 0) {
+            const uniqueDuplicates = [...new Set(duplicates)];
+            alert(`同一プレイヤーが複数選択されています。\n（対象: ${uniqueDuplicates.join(', ')}）`);
+            return;
         }
 
         if (totalInputScore !== realStart * state.mode) {
