@@ -117,7 +117,7 @@
         .ring-tile:nth-child(6) { transform: rotate(257deg) translate(115px) rotate(-257deg); }
         .ring-tile:nth-child(7) { transform: rotate(308.4deg) translate(115px) rotate(-308.4deg); }
 
-        /* タイトル・サブタイトル（中央配置・起動画面用） */
+        /* タイトル・サブタイトル（起動画面用） */
         .splash-center-content {
             text-align: center;
             z-index: 2;
@@ -161,7 +161,7 @@
             to { opacity: 1; transform: scale(1); }
         }
 
-        /* 🀄 和モダンヘッダー */
+        /* 🀄 ヘッダー */
         header {
             background: linear-gradient(180deg, #1f2a24 0%, #121212 100%);
             padding: 15px;
@@ -199,7 +199,6 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* 千点棒のベース（長め：50px / 赤ポッチを中央に配置） */
         .main-title::before,
         .main-title::after {
             content: '';
@@ -376,10 +375,9 @@
 </head>
 <body>
 
-<!-- 🀄 スプラッシュ画面（棒なし・シンプルタイトル） -->
+<!-- 🀄 スプラッシュ画面 -->
 <div id="splash-screen">
     <div class="splash-container">
-        <!-- 円形に並んだ全枠付き字牌7種 -->
         <div class="tile-ring">
             <span class="ring-tile"><span class="tile-box">東</span></span>
             <span class="ring-tile"><span class="tile-box">南</span></span>
@@ -389,7 +387,6 @@
             <span class="ring-tile"><span class="tile-box">發</span></span>
             <span class="ring-tile"><span class="tile-box">中</span></span>
         </div>
-        <!-- 中央タイトル -->
         <div class="splash-center-content">
             <h1 class="splash-title">松雀</h1>
             <div class="splash-sub">MAHJONG SCORE</div>
@@ -441,6 +438,17 @@
                     <span class="score-unit">00点</span>
                 </div>
             </div>
+        </div>
+
+        <div style="margin-top: 12px;">
+            <label>百の位の端数処理（pt切り上げ/切り捨て等）</label>
+            <select id="roundingMode" onchange="updateRuleCustom()">
+                <option value="56">五捨六入 (Mリーグ・標準)</option>
+                <option value="45">四捨五入</option>
+                <option value="down">切り捨て</option>
+                <option value="up">切り上げ</option>
+                <option value="none">小数点をそのまま残す</option>
+            </select>
         </div>
 
         <div style="margin-top: 12px;">
@@ -497,8 +505,8 @@
         history: [], 
         mode: 4,     
         rules: {
-            4: { start: 250, return: 300, uma: [30, 10, -10, -30] },
-            3: { start: 350, return: 400, uma: [20, 0, -20] }
+            4: { start: 250, return: 300, uma: [30, 10, -10, -30], rounding: '56' },
+            3: { start: 350, return: 400, uma: [20, 0, -20], rounding: '56' }
         }
     };
 
@@ -506,7 +514,12 @@
         const saved = localStorage.getItem('mahjong_data');
         if (saved) {
             const parsed = JSON.parse(saved);
-            if (parsed.rules) state.rules = parsed.rules;
+            if (parsed.rules) {
+                state.rules = parsed.rules;
+                // デフォルトの端数処理モードをセット
+                if (!state.rules[4].rounding) state.rules[4].rounding = '56';
+                if (!state.rules[3].rounding) state.rules[3].rounding = '56';
+            }
             if (parsed.members) state.members = parsed.members;
             if (parsed.history) state.history = parsed.history;
             if (parsed.mode) state.mode = parsed.mode;
@@ -544,6 +557,7 @@
         const mode = state.mode;
         const start = parseInt(document.getElementById('ruleStart').value) || 0;
         const ret = parseInt(document.getElementById('ruleReturn').value) || 0;
+        const rounding = document.getElementById('roundingMode').value;
         
         let uma = [];
         for (let i = 0; i < mode; i++) {
@@ -551,7 +565,7 @@
             uma.push(val);
         }
 
-        state.rules[mode] = { start: start, return: ret, uma: uma };
+        state.rules[mode] = { start: start, return: ret, uma: uma, rounding: rounding };
         saveData();
     }
 
@@ -559,6 +573,7 @@
         const rule = state.rules[state.mode];
         document.getElementById('ruleStart').value = rule.start;
         document.getElementById('ruleReturn').value = rule.return;
+        document.getElementById('roundingMode').value = rule.rounding || '56';
 
         const umaContainer = document.getElementById('umaContainer');
         umaContainer.className = `uma-wrapper uma-${state.mode}`;
@@ -630,10 +645,37 @@
         document.getElementById('currentTotalPoints').style.color = (sum === target) ? 'var(--success)' : 'var(--danger)';
     }
 
+    // 百の位の端数処理関数
+    function applyRounding(rawPt, mode) {
+        if (mode === 'none') return rawPt;
+        
+        // 端数（小数部分: 例 1.5pt -> 500点分）
+        // 正負で正しく計算できるよう絶対値に分離
+        const sign = rawPt < 0 ? -1 : 1;
+        const absPt = Math.abs(rawPt);
+        const integerPart = Math.floor(absPt);
+        const decimalPart = Math.round((absPt - integerPart) * 10); // 100点単位の数 (0~9)
+
+        let roundedInteger = integerPart;
+
+        if (mode === '56') { // 五捨六入 (1~5:捨, 6~9:入)
+            if (decimalPart >= 6) roundedInteger += 1;
+        } else if (mode === '45') { // 四捨五入 (1~4:捨, 5~9:入)
+            if (decimalPart >= 5) roundedInteger += 1;
+        } else if (mode === 'down') { // 切り捨て
+            // 変化なし
+        } else if (mode === 'up') { // 切り上げ
+            if (decimalPart > 0) roundedInteger += 1;
+        }
+
+        return roundedInteger * sign;
+    }
+
     function saveGame() {
         const rule = state.rules[state.mode];
         const realStart = rule.start * 100;
         const realReturn = rule.return * 100;
+        const roundingMode = rule.rounding || '56';
 
         let players = [];
         let totalInputScore = 0;
@@ -654,19 +696,33 @@
             if (!confirm(`点数合計が合いません（現在:${totalInputScore.toLocaleString()}点）。このまま保存しますか？`)) return;
         }
 
+        // 順位順にソート (スコアの高い順)
         players.sort((a, b) => b.score - a.score);
 
         let gameResults = [];
-        let ptSum = 0;
+        let nonTopPtSum = 0;
 
-        players.forEach((p, index) => {
-            let basePt = (p.score - realReturn) / 1000;
-            let pt = basePt + rule.uma[index];
-            gameResults.push({ name: p.name, score: p.score, pt: pt, rank: index + 1 });
-            if (index !== 0) ptSum += pt;
-        });
+        // 2位以下を先に計算＆端数処理
+        for (let index = 1; index < players.length; index++) {
+            const p = players[index];
+            let rawPt = ((p.score - realReturn) / 1000) + rule.uma[index];
+            let roundedPt = applyRounding(rawPt, roundingMode);
+            
+            gameResults.push({ name: p.name, score: p.score, pt: roundedPt, rank: index + 1 });
+            nonTopPtSum += roundedPt;
+        }
 
-        gameResults[0].pt = Math.round((0 - ptSum) * 10) / 10;
+        // 1位（トップ）は全員の合計が±0になるように調整
+        const topPlayer = players[0];
+        let topPt;
+        if (roundingMode === 'none') {
+            let rawTopPt = ((topPlayer.score - realReturn) / 1000) + rule.uma[0];
+            topPt = Math.round(rawTopPt * 10) / 10;
+        } else {
+            topPt = 0 - nonTopPtSum; // 余りを吸収して±0にする
+        }
+
+        gameResults.unshift({ name: topPlayer.name, score: topPlayer.score, pt: topPt, rank: 1 });
 
         const historyItem = {
             id: Date.now(),
@@ -736,12 +792,13 @@
         statsBody.innerHTML = sortedStats.map(name => {
             const s = stats[name];
             const rate = totalGamesCount > 0 ? ((s.count / totalGamesCount) * 100).toFixed(0) : 0;
+            const formattedPt = Number.isInteger(s.pt) ? s.pt.toString() : s.pt.toFixed(1);
             return `
                 <tr>
                     <td>${name}</td>
                     <td>${s.count} / ${totalGamesCount}</td>
                     <td>${rate}%</td>
-                    <td class="${s.pt >= 0 ? 'pos-pt' : 'neg-pt'}">${s.pt.toFixed(1)}</td>
+                    <td class="${s.pt >= 0 ? 'pos-pt' : 'neg-pt'}">${formattedPt}</td>
                     <td>${(s.rankSum / s.count).toFixed(2)}</td>
                 </tr>
             `;
@@ -775,7 +832,6 @@
     window.onload = () => {
         loadData();
 
-        // 🀄 起動アニメーション用処理 (3.0秒後にフェードアウト)
         setTimeout(() => {
             const splash = document.getElementById('splash-screen');
             if (splash) {
