@@ -77,7 +77,7 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            margin: -1rem 0 0 -0.85rem; /* 牌の中心を回転軸に合わせる */
+            margin: -1rem 0 0 -0.85rem;
             width: 1.7rem;
             height: 2rem;
             display: flex;
@@ -108,7 +108,7 @@
             background: rgba(212, 175, 55, 0.08);
         }
 
-        /* 7等分（約51.4度刻み）で円形に配置 */
+        /* 7等分で円形に配置 */
         .ring-tile:nth-child(1) { transform: rotate(0deg) translate(115px) rotate(0deg); }
         .ring-tile:nth-child(2) { transform: rotate(51.4deg) translate(115px) rotate(-51.4deg); }
         .ring-tile:nth-child(3) { transform: rotate(102.8deg) translate(115px) rotate(-102.8deg); }
@@ -183,17 +183,38 @@
             border: 2px solid var(--accent);
         }
         
-        /* メイン画面ロゴ「松雀」（案2スタイルを適用） */
+        /* メイン画面ロゴ「松雀」（左右ゴールド横線デザイン） */
         h1 {
             margin: 0;
             font-size: 1.8rem;
             font-weight: bold;
             color: var(--accent);
             letter-spacing: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
             text-shadow: 0 2px 10px rgba(0,0,0,0.8), 0 0 15px rgba(212, 175, 55, 0.5);
             background: linear-gradient(135deg, #ffffff 0%, var(--accent) 50%, #997a15 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+
+        /* 左右のゴールド横線（フェードアウト効果つき） */
+        h1::before,
+        h1::after {
+            content: '';
+            display: inline-block;
+            width: 30px;
+            height: 2px;
+            box-shadow: 0 0 6px rgba(212, 175, 55, 0.6);
+        }
+
+        h1::before {
+            background: linear-gradient(90deg, transparent 0%, var(--accent) 100%);
+        }
+
+        h1::after {
+            background: linear-gradient(90deg, var(--accent) 0%, transparent 100%);
         }
 
         .container { max-width: 600px; margin: 0 auto; padding: 15px; }
