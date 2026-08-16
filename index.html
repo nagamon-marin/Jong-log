@@ -51,7 +51,6 @@
             visibility: hidden;
         }
 
-        /* 画面中央に完全配置 */
         .splash-container {
             position: absolute;
             top: 50%;
@@ -64,7 +63,6 @@
             align-items: center;
         }
 
-        /* 円状に配置して回る字牌7種リング */
         .tile-ring {
             position: absolute;
             width: 100%;
@@ -85,7 +83,6 @@
             justify-content: center;
         }
 
-        /* 全字牌共通の長方形枠（麻雀牌風） */
         .tile-box {
             width: 100%;
             height: 100%;
@@ -103,12 +100,10 @@
             line-height: 1;
         }
 
-        /* 白（文字なし枠のみ） */
         .tile-box.haku {
             background: rgba(212, 175, 55, 0.08);
         }
 
-        /* 7等分で円形に配置 */
         .ring-tile:nth-child(1) { transform: rotate(0deg) translate(115px) rotate(0deg); }
         .ring-tile:nth-child(2) { transform: rotate(51.4deg) translate(115px) rotate(-51.4deg); }
         .ring-tile:nth-child(3) { transform: rotate(102.8deg) translate(115px) rotate(-102.8deg); }
@@ -117,7 +112,6 @@
         .ring-tile:nth-child(6) { transform: rotate(257deg) translate(115px) rotate(-257deg); }
         .ring-tile:nth-child(7) { transform: rotate(308.4deg) translate(115px) rotate(-308.4deg); }
 
-        /* タイトル・サブタイトル（起動画面用） */
         .splash-center-content {
             text-align: center;
             z-index: 2;
@@ -183,7 +177,6 @@
             border: 2px solid var(--accent);
         }
         
-        /* メイン画面ロゴ「松雀」（両サイドに長め＆真ん中赤ポッチの千点棒） */
         .main-title {
             margin: 0;
             font-size: 1.8rem;
@@ -226,7 +219,6 @@
 
         h2 { font-size: 1.1rem; margin-top: 0; border-left: 4px solid var(--accent); padding-left: 10px; }
 
-        /* Forms */
         .form-group { margin-bottom: 15px; }
         label { display: block; font-size: 0.85rem; margin-bottom: 5px; color: #bbb; }
         select, input {
@@ -279,7 +271,6 @@
         .btn-outline { background: transparent; color: #bbb; border-color: #444; margin-top: 10px; }
         .btn-danger { color: var(--danger); border-color: var(--danger); }
 
-        /* Members List */
         .member-tag {
             display: inline-block;
             background: #333;
@@ -295,18 +286,15 @@
         }
         .remove-btn { color: var(--danger); margin-left: 8px; cursor: pointer; }
 
-        /* Score Table */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
         th, td { padding: 10px; text-align: center; border-bottom: 1px solid #333; }
         th { color: var(--accent); }
         .pos-pt { color: var(--success); }
         .neg-pt { color: var(--danger); }
 
-        /* Grid for Point Input */
         .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .input-item { background: #252525; padding: 10px; border-radius: 8px; }
 
-        /* Rule Config Inputs */
         .rule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         
         .uma-wrapper {
@@ -341,7 +329,6 @@
         }
         .uma-box input:focus { outline: none; }
 
-        /* History Accordion */
         .history-item {
             border-bottom: 1px solid #333;
             padding: 12px 0;
@@ -516,7 +503,6 @@
             const parsed = JSON.parse(saved);
             if (parsed.rules) {
                 state.rules = parsed.rules;
-                // デフォルトの端数処理モードをセット
                 if (!state.rules[4].rounding) state.rules[4].rounding = '56';
                 if (!state.rules[3].rounding) state.rules[3].rounding = '56';
             }
@@ -647,14 +633,15 @@
 
     // 百の位の端数処理関数
     function applyRounding(rawPt, mode) {
-        if (mode === 'none') return rawPt;
+        if (mode === 'none') {
+            return Math.round(rawPt * 10) / 10;
+        }
         
-        // 端数（小数部分: 例 1.5pt -> 500点分）
-        // 正負で正しく計算できるよう絶対値に分離
         const sign = rawPt < 0 ? -1 : 1;
         const absPt = Math.abs(rawPt);
         const integerPart = Math.floor(absPt);
-        const decimalPart = Math.round((absPt - integerPart) * 10); // 100点単位の数 (0~9)
+        // 小数第1位（100点単位）
+        const decimalPart = Math.round((absPt - integerPart) * 10); 
 
         let roundedInteger = integerPart;
 
@@ -712,14 +699,11 @@
             nonTopPtSum += roundedPt;
         }
 
-        // 1位（トップ）は全員の合計が±0になるように調整
+        // 1位（トップ）は全員の合計が±0になるように調整（オカと端数調整を自動計算）
         const topPlayer = players[0];
-        let topPt;
+        let topPt = 0 - nonTopPtSum;
         if (roundingMode === 'none') {
-            let rawTopPt = ((topPlayer.score - realReturn) / 1000) + rule.uma[0];
-            topPt = Math.round(rawTopPt * 10) / 10;
-        } else {
-            topPt = 0 - nonTopPtSum; // 余りを吸収して±0にする
+            topPt = Math.round(topPt * 10) / 10;
         }
 
         gameResults.unshift({ name: topPlayer.name, score: topPlayer.score, pt: topPt, rank: 1 });
