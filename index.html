@@ -117,7 +117,7 @@
         .ring-tile:nth-child(6) { transform: rotate(257deg) translate(115px) rotate(-257deg); }
         .ring-tile:nth-child(7) { transform: rotate(308.4deg) translate(115px) rotate(-308.4deg); }
 
-        /* タイトル・サブタイトル（中央配置） */
+        /* タイトル・サブタイトル（中央配置・起動画面用） */
         .splash-center-content {
             text-align: center;
             z-index: 2;
@@ -183,8 +183,8 @@
             border: 2px solid var(--accent);
         }
         
-        /* メイン画面ロゴ「松雀」（両サイド千点棒デザイン） */
-        h1 {
+        /* メイン画面ロゴ「松雀」（両サイドに長め＆真ん中赤ポッチの千点棒） */
+        .main-title {
             margin: 0;
             font-size: 1.8rem;
             font-weight: bold;
@@ -199,31 +199,20 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* 千点棒のベース（左右共通） */
-        h1::before,
-        h1::after {
+        /* 千点棒のベース（長め：50px / 赤ポッチを中央に配置） */
+        .main-title::before,
+        .main-title::after {
             content: '';
             display: inline-block;
-            width: 38px;
+            width: 50px;
             height: 6px;
-            background: #fff;
             border-radius: 3px;
-            box-shadow: 0 0 6px rgba(212, 175, 55, 0.6);
             border: 1px solid var(--accent);
+            box-shadow: 0 0 6px rgba(212, 175, 55, 0.5);
+            background: radial-gradient(circle at center, #e53935 0%, #e53935 2.5px, transparent 3px),
+                        linear-gradient(90deg, #fff 0%, #e6e6e6 100%);
             position: relative;
             flex-shrink: 0;
-        }
-
-        /* 左の千点棒（赤いポッチを左端に配置） */
-        h1::before {
-            background: radial-gradient(circle at 6px center, #e53935 0%, #e53935 2.5px, transparent 3px),
-                        linear-gradient(90deg, #fff 0%, #d4af37 100%);
-        }
-
-        /* 右の千点棒（赤いポッチを右端に配置） */
-        h1::after {
-            background: radial-gradient(circle at 32px center, #e53935 0%, #e53935 2.5px, transparent 3px),
-                        linear-gradient(90deg, #d4af37 0%, #fff 100%);
         }
 
         .container { max-width: 600px; margin: 0 auto; padding: 15px; }
@@ -387,7 +376,7 @@
 </head>
 <body>
 
-<!-- 🀄 スプラッシュ画面 -->
+<!-- 🀄 スプラッシュ画面（棒なし・シンプルタイトル） -->
 <div id="splash-screen">
     <div class="splash-container">
         <!-- 円形に並んだ全枠付き字牌7種 -->
@@ -411,7 +400,7 @@
 <header>
     <div class="header-inner">
         <img src="icon.png?v=108" class="logo-img" alt="logo" onerror="this.style.display='none'">
-        <h1>松雀</h1>
+        <h1 class="main-title">松雀</h1>
     </div>
 </header>
 
