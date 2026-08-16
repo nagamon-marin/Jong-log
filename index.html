@@ -384,6 +384,33 @@
             font-size: 0.7rem;
             margin-left: 6px;
         }
+
+        /* 🀄 成績タブ */
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 8px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: #aaa;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: 0.2s;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
     </style>
 </head>
 <body>
@@ -518,6 +545,13 @@
     <!-- 4. トータル成績 -->
     <section class="card">
         <h2>トータル成績 <span id="statsTournamentName" style="font-size: 0.8rem; font-weight: normal; color: var(--accent);"></span></h2>
+        
+        <!-- 集計範囲切り替えタブ -->
+        <div class="tab-container">
+            <button id="tab-all" class="tab-btn active" onclick="switchStatsTab('all')">全対局</button>
+            <button id="tab-tournament" class="tab-btn" onclick="switchStatsTab('tournament')">大会別</button>
+        </div>
+
         <div style="overflow-x: auto;">
             <table id="statsTable">
                 <thead>
@@ -551,6 +585,7 @@
             { id: 'none', name: '大会なし（指定なし）' }
         ],
         currentTournamentId: 'none',
+        statsTabMode: 'all', // 'all' (全対局) または 'tournament' (大会別)
         members: [], 
         history: [], 
         mode: 4,     
@@ -566,6 +601,7 @@
             const parsed = JSON.parse(saved);
             if (parsed.tournaments) state.tournaments = parsed.tournaments;
             if (parsed.currentTournamentId !== undefined) state.currentTournamentId = parsed.currentTournamentId;
+            if (parsed.statsTabMode) state.statsTabMode = parsed.statsTabMode;
             if (parsed.rules) {
                 state.rules = parsed.rules;
                 if (!state.rules[4].rounding) state.rules[4].rounding = '56';
@@ -622,6 +658,11 @@
         });
         state.tournaments = state.tournaments.filter(x => x.id !== state.currentTournamentId);
         state.currentTournamentId = 'none';
+        saveData();
+    }
+
+    function switchStatsTab(mode) {
+        state.statsTabMode = mode;
         saveData();
     }
 
@@ -806,16 +847,14 @@
             if (!confirm(`点数合計が合いません（現在:${totalInputScore.toLocaleString()}点）。このまま保存しますか？`)) return;
         }
 
-        // 順位順にソート (スコアの高い順)
+        // 順位順にソート
         players.sort((a, b) => b.score - a.score);
 
-        // ヤキトリ人数のカウント
         const yakitoriCount = players.filter(p => p.isYakitori).length;
 
         let gameResults = [];
         let nonTopPtSum = 0;
 
-        // 2位以下に【端数処理】および【ヤキトリペナルティ】を適用
         for (let index = 1; index < players.length; index++) {
             const p = players[index];
             let rawPt = ((p.score - realReturn) / 1000) + rule.uma[index];
@@ -837,7 +876,6 @@
             nonTopPtSum += roundedPt;
         }
 
-        // 1位（トップ）は全員の合計が±0になるよう調整
         const topPlayer = players[0];
         let topPt = 0 - nonTopPtSum;
         if (roundingMode === 'none') {
@@ -890,13 +928,21 @@
             `<option value="${t.id}" ${t.id === state.currentTournamentId ? 'selected' : ''}>${t.name}</option>`
         ).join('');
 
+        // タブボタンのUI切替
+        document.getElementById('tab-all').className = `tab-btn ${state.statsTabMode === 'all' ? 'active' : ''}`;
+        document.getElementById('tab-tournament').className = `tab-btn ${state.statsTabMode === 'tournament' ? 'active' : ''}`;
+
         // トータル成績の見出し変更
         const currentT = state.tournaments.find(t => t.id === state.currentTournamentId);
-        document.getElementById('statsTournamentName').innerText = (currentT && currentT.id !== 'none') ? `[ ${currentT.name} ]` : '';
+        if (state.statsTabMode === 'all') {
+            document.getElementById('statsTournamentName').innerText = '[ 全対局 ]';
+        } else {
+            document.getElementById('statsTournamentName').innerText = (currentT) ? `[ ${currentT.name} ]` : '';
+        }
 
-        // 選択された大会の対局のみフィルタリングして集計（'none' の場合は全対局）
+        // 成績タブの選択状態に合わせて対局履歴をフィルタリング
         const filteredHistory = state.history.filter(h => {
-            if (state.currentTournamentId === 'none') return true;
+            if (state.statsTabMode === 'all') return true;
             return h.tournamentId === state.currentTournamentId;
         });
 
@@ -912,7 +958,7 @@
             });
         });
 
-        // 全体の履歴数を基準にメンバーの参加数を表示
+        // メンバー管理リストの作成
         const mList = document.getElementById('memberList');
         mList.innerHTML = state.members.map(m => {
             const memberCount = stats[m.name] ? stats[m.name].count : 0;
@@ -949,7 +995,6 @@
         const hList = document.getElementById('historyList');
         hList.innerHTML = state.history.map(h => {
             const tObj = state.tournaments.find(t => t.id === h.tournamentId);
-            // 大会が指定されていない場合（'none' または未定義）はバッジ表示を空欄（非表示）にする
             const tournamentBadgeHtml = (tObj && tObj.id !== 'none') ? `<span class="tournament-badge">${tObj.name}</span>` : '';
             
             return `
