@@ -11,8 +11,8 @@
     <meta name="apple-mobile-web-app-title" content="松雀">
     
     <!-- アイコン設定 -->
-    <link rel="apple-touch-icon" href="icon.png?v=105">
-    <link rel="icon" href="icon.png?v=105">
+    <link rel="apple-touch-icon" href="icon.png?v=106">
+    <link rel="icon" href="icon.png?v=106">
 
     <style>
         :root {
@@ -48,7 +48,7 @@
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            transition: opacity 0.6s ease, visibility 0.6s ease;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
         }
         #splash-screen.hidden {
             opacity: 0;
@@ -61,7 +61,7 @@
             margin-bottom: 15px;
             opacity: 0;
             transform: translateY(15px);
-            animation: tileFadeIn 1s ease forwards 0.2s;
+            animation: tileFadeIn 1.2s ease forwards 0.2s;
             color: #e0e0e0;
             text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
         }
@@ -74,7 +74,7 @@
             margin: 0;
             opacity: 0;
             transform: scale(0.9);
-            animation: titleZoomIn 0.8s ease forwards 0.5s;
+            animation: titleZoomIn 1s ease forwards 0.6s;
             text-shadow: 0 4px 20px rgba(0,0,0,0.8), 0 0 15px rgba(212, 175, 55, 0.5);
             background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, #997a15 100%);
             -webkit-background-clip: text;
@@ -87,7 +87,7 @@
             letter-spacing: 3px;
             margin-top: 8px;
             opacity: 0;
-            animation: tileFadeIn 1s ease forwards 0.8s;
+            animation: tileFadeIn 1.2s ease forwards 1s;
         }
 
         @keyframes tileFadeIn {
@@ -286,7 +286,7 @@
 </div>
 
 <header>
-    <img src="icon.png?v=105" class="logo-img" alt="logo" onerror="this.style.display='none'">
+    <img src="icon.png?v=106" class="logo-img" alt="logo" onerror="this.style.display='none'">
     <h1>松雀</h1>
 </header>
 
@@ -661,13 +661,13 @@
     window.onload = () => {
         loadData();
 
-        // 🀄 起動アニメーション用処理 (1.8秒後に消去)
+        // 🀄 起動アニメーション用処理 (3.0秒後にフェードアウト)
         setTimeout(() => {
             const splash = document.getElementById('splash-screen');
             if (splash) {
                 splash.classList.add('hidden');
             }
-        }, 1800);
+        }, 3000);
     };
 </script>
 
