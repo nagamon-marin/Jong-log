@@ -35,7 +35,7 @@
             line-height: 1.6;
         }
 
-        /* 🀄 スプラッシュ画面（起動画面） */
+        /* 🀄 スプラッシュ画面 */
         #splash-screen {
             position: fixed;
             top: 0;
@@ -385,7 +385,7 @@
             margin-left: 6px;
         }
 
-        /* 🀄 成績タブ */
+        /* 成績タブ */
         .tab-container {
             display: flex;
             gap: 10px;
@@ -472,7 +472,7 @@
     <!-- 2. ルール設定 -->
     <section class="card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2>対局設定</h2>
+            <h2>対局設定 <span id="ruleTargetBadge" style="font-size:0.75rem; font-weight:normal; color:var(--accent);"></span></h2>
             <select id="gameMode" style="width: auto;" onchange="changeMode()">
                 <option value="4">四人麻雀</option>
                 <option value="3">三人麻雀</option>
@@ -519,8 +519,8 @@
         <div style="margin-top: 12px;">
             <label>ヤキトリ精算方式</label>
             <select id="ruleYakitoriMode" onchange="updateRuleCustom()">
+                <option value="top">1位が総取り（対象者のペナルティ額を1位へ）</option>
                 <option value="split">各プレイヤーに分配（一人あたり設定ptを全員へ支払う）</option>
-                <option value="top">1位が総取り（対象者の合計額をトップへ）</option>
             </select>
         </div>
 
@@ -580,37 +580,53 @@
 <script>
     const SEATS = ['東家', '南家', '西家', '北家'];
 
+    // デフォルトルールテンプレート
+    function getDefaultRules() {
+        return {
+            4: { start: 250, return: 300, uma: [20, 10, -10, -20], rounding: '56', yakitori: 10, yakitoriMode: 'top' },
+            3: { start: 350, return: 400, uma: [20, 0, -20], rounding: '56', yakitori: 10, yakitoriMode: 'top' }
+        };
+    }
+
     let state = {
         tournaments: [
-            { id: 'none', name: '大会なし（指定なし）' }
+            { id: 'none', name: '大会なし（指定なし）', rules: getDefaultRules() }
         ],
         currentTournamentId: 'none',
-        statsTabMode: 'all', // 'all' (全対局) または 'tournament' (大会別)
+        statsTabMode: 'all',
         members: [], 
         history: [], 
-        mode: 4,     
-        rules: {
-            4: { start: 250, return: 300, uma: [20, 10, -10, -20], rounding: '56', yakitori: 10, yakitoriMode: 'split' },
-            3: { start: 350, return: 400, uma: [20, 0, -20], rounding: '56', yakitori: 10, yakitoriMode: 'split' }
-        }
+        mode: 4
     };
+
+    // 現在の大会のルールを取得
+    function getCurrentRules() {
+        let t = state.tournaments.find(x => x.id === state.currentTournamentId);
+        if (!t) {
+            t = state.tournaments[0];
+        }
+        if (!t.rules) {
+            t.rules = getDefaultRules();
+        }
+        return t.rules;
+    }
 
     function loadData() {
         const saved = localStorage.getItem('mahjong_data');
         if (saved) {
             const parsed = JSON.parse(saved);
-            if (parsed.tournaments) state.tournaments = parsed.tournaments;
+            if (parsed.tournaments) {
+                state.tournaments = parsed.tournaments;
+                // ルール未所持の大会データへの後方互換処理
+                state.tournaments.forEach(t => {
+                    if (!t.rules) t.rules = getDefaultRules();
+                    [3, 4].forEach(m => {
+                        if (!t.rules[m].yakitoriMode) t.rules[m].yakitoriMode = 'top';
+                    });
+                });
+            }
             if (parsed.currentTournamentId !== undefined) state.currentTournamentId = parsed.currentTournamentId;
             if (parsed.statsTabMode) state.statsTabMode = parsed.statsTabMode;
-            if (parsed.rules) {
-                state.rules = parsed.rules;
-                if (!state.rules[4].rounding) state.rules[4].rounding = '56';
-                if (!state.rules[3].rounding) state.rules[3].rounding = '56';
-                if (state.rules[4].yakitori === undefined) state.rules[4].yakitori = 10;
-                if (state.rules[3].yakitori === undefined) state.rules[3].yakitori = 10;
-                if (!state.rules[4].yakitoriMode) state.rules[4].yakitoriMode = 'split';
-                if (!state.rules[3].yakitoriMode) state.rules[3].yakitoriMode = 'split';
-            }
             if (parsed.members) state.members = parsed.members;
             if (parsed.history) state.history = parsed.history;
             if (parsed.mode) state.mode = parsed.mode;
@@ -630,7 +646,7 @@
         const name = input.value.trim();
         if (!name) return;
         const newId = Date.now();
-        state.tournaments.push({ id: newId, name: name });
+        state.tournaments.push({ id: newId, name: name, rules: getDefaultRules() });
         state.currentTournamentId = newId;
         input.value = '';
         saveData();
@@ -687,7 +703,9 @@
         saveData();
     }
 
+    // 大会ごとのカスタムルール更新
     function updateRuleCustom() {
+        const rules = getCurrentRules();
         const mode = state.mode;
         const start = parseInt(document.getElementById('ruleStart').value) || 0;
         const ret = parseInt(document.getElementById('ruleReturn').value) || 0;
@@ -701,17 +719,22 @@
             uma.push(val);
         }
 
-        state.rules[mode] = { start: start, return: ret, uma: uma, rounding: rounding, yakitori: yakitori, yakitoriMode: yakitoriMode };
+        rules[mode] = { start: start, return: ret, uma: uma, rounding: rounding, yakitori: yakitori, yakitoriMode: yakitoriMode };
         saveData();
     }
 
     function syncRuleUI() {
-        const rule = state.rules[state.mode];
+        const rules = getCurrentRules();
+        const rule = rules[state.mode];
+
+        const tObj = state.tournaments.find(t => t.id === state.currentTournamentId);
+        document.getElementById('ruleTargetBadge').innerText = tObj ? `(${tObj.name})` : '';
+
         document.getElementById('ruleStart').value = rule.start;
         document.getElementById('ruleReturn').value = rule.return;
         document.getElementById('roundingMode').value = rule.rounding || '56';
         document.getElementById('ruleYakitori').value = rule.yakitori !== undefined ? rule.yakitori : 10;
-        document.getElementById('ruleYakitoriMode').value = rule.yakitoriMode || 'split';
+        document.getElementById('ruleYakitoriMode').value = rule.yakitoriMode || 'top';
 
         const umaContainer = document.getElementById('umaContainer');
         umaContainer.className = `uma-wrapper uma-${state.mode}`;
@@ -781,12 +804,14 @@
     }
 
     function calcCurrentTotal() {
+        const rules = getCurrentRules();
+        const rule = rules[state.mode];
         const scores = document.querySelectorAll('.p-score');
         let sum = 0;
         scores.forEach(s => sum += ((parseInt(s.value) || 0) * 100));
         document.getElementById('currentTotalPoints').innerText = sum.toLocaleString();
         
-        const target = state.rules[state.mode].start * 100 * state.mode;
+        const target = rule.start * 100 * state.mode;
         document.getElementById('currentTotalPoints').style.color = (sum === target) ? 'var(--success)' : 'var(--danger)';
     }
 
@@ -819,12 +844,13 @@
     }
 
     function saveGame() {
-        const rule = state.rules[state.mode];
+        const rules = getCurrentRules();
+        const rule = rules[state.mode];
         const realStart = rule.start * 100;
         const realReturn = rule.return * 100;
         const roundingMode = rule.rounding || '56';
         const yakitoriPenalty = rule.yakitori !== undefined ? rule.yakitori : 10;
-        const yakitoriMode = rule.yakitoriMode || 'split';
+        const yakitoriMode = rule.yakitoriMode || 'top';
 
         let players = [];
         let totalInputScore = 0;
@@ -847,7 +873,6 @@
             if (!confirm(`点数合計が合いません（現在:${totalInputScore.toLocaleString()}点）。このまま保存しますか？`)) return;
         }
 
-        // 順位順にソート
         players.sort((a, b) => b.score - a.score);
 
         const yakitoriCount = players.filter(p => p.isYakitori).length;
@@ -866,7 +891,7 @@
                 } else {
                     roundedPt += (yakitoriPenalty * yakitoriCount);
                 }
-            } else {
+            } else { // top (1位総取り)
                 if (p.isYakitori) {
                     roundedPt -= yakitoriPenalty;
                 }
@@ -922,17 +947,14 @@
     }
 
     function renderAll() {
-        // 大会セレクトボックスの更新
         const tSelect = document.getElementById('currentTournamentSelect');
         tSelect.innerHTML = state.tournaments.map(t => 
             `<option value="${t.id}" ${t.id === state.currentTournamentId ? 'selected' : ''}>${t.name}</option>`
         ).join('');
 
-        // タブボタンのUI切替
         document.getElementById('tab-all').className = `tab-btn ${state.statsTabMode === 'all' ? 'active' : ''}`;
         document.getElementById('tab-tournament').className = `tab-btn ${state.statsTabMode === 'tournament' ? 'active' : ''}`;
 
-        // トータル成績の見出し変更
         const currentT = state.tournaments.find(t => t.id === state.currentTournamentId);
         if (state.statsTabMode === 'all') {
             document.getElementById('statsTournamentName').innerText = '[ 全対局 ]';
@@ -940,7 +962,6 @@
             document.getElementById('statsTournamentName').innerText = (currentT) ? `[ ${currentT.name} ]` : '';
         }
 
-        // 成績タブの選択状態に合わせて対局履歴をフィルタリング
         const filteredHistory = state.history.filter(h => {
             if (state.statsTabMode === 'all') return true;
             return h.tournamentId === state.currentTournamentId;
@@ -958,7 +979,6 @@
             });
         });
 
-        // メンバー管理リストの作成
         const mList = document.getElementById('memberList');
         mList.innerHTML = state.members.map(m => {
             const memberCount = stats[m.name] ? stats[m.name].count : 0;
@@ -991,7 +1011,6 @@
             `;
         }).join('');
 
-        // 対局履歴の表示
         const hList = document.getElementById('historyList');
         hList.innerHTML = state.history.map(h => {
             const tObj = state.tournaments.find(t => t.id === h.tournamentId);
