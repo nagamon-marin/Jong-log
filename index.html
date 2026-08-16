@@ -183,7 +183,7 @@
             border: 2px solid var(--accent);
         }
         
-        /* メイン画面ロゴ「松雀」（左右ゴールド横線デザイン） */
+        /* メイン画面ロゴ「松雀」（両サイド千点棒デザイン） */
         h1 {
             margin: 0;
             font-size: 1.8rem;
@@ -192,29 +192,38 @@
             letter-spacing: 4px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             text-shadow: 0 2px 10px rgba(0,0,0,0.8), 0 0 15px rgba(212, 175, 55, 0.5);
             background: linear-gradient(135deg, #ffffff 0%, var(--accent) 50%, #997a15 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        /* 左右のゴールド横線（フェードアウト効果つき） */
+        /* 千点棒のベース（左右共通） */
         h1::before,
         h1::after {
             content: '';
             display: inline-block;
-            width: 30px;
-            height: 2px;
+            width: 38px;
+            height: 6px;
+            background: #fff;
+            border-radius: 3px;
             box-shadow: 0 0 6px rgba(212, 175, 55, 0.6);
+            border: 1px solid var(--accent);
+            position: relative;
+            flex-shrink: 0;
         }
 
+        /* 左の千点棒（赤いポッチを左端に配置） */
         h1::before {
-            background: linear-gradient(90deg, transparent 0%, var(--accent) 100%);
+            background: radial-gradient(circle at 6px center, #e53935 0%, #e53935 2.5px, transparent 3px),
+                        linear-gradient(90deg, #fff 0%, #d4af37 100%);
         }
 
+        /* 右の千点棒（赤いポッチを右端に配置） */
         h1::after {
-            background: linear-gradient(90deg, var(--accent) 0%, transparent 100%);
+            background: radial-gradient(circle at 32px center, #e53935 0%, #e53935 2.5px, transparent 3px),
+                        linear-gradient(90deg, #d4af37 0%, #fff 100%);
         }
 
         .container { max-width: 600px; margin: 0 auto; padding: 15px; }
