@@ -10,9 +10,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="松雀">
     
-    <!-- 強制読み込み用バージョン付きアイコン設定 -->
-    <link rel="apple-touch-icon" href="icon.png?v=104">
-    <link rel="icon" href="icon.png?v=104">
+    <!-- アイコン設定 -->
+    <link rel="apple-touch-icon" href="icon.png?v=105">
+    <link rel="icon" href="icon.png?v=105">
 
     <style>
         :root {
@@ -33,6 +33,68 @@
             margin: 0;
             padding-bottom: 50px;
             line-height: 1.6;
+        }
+
+        /* 🀄 スプラッシュ画面（起動画面） */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, #1b3d2f 0%, #0a0a0a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        #splash-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .splash-tiles {
+            font-size: 2rem;
+            letter-spacing: 8px;
+            margin-bottom: 15px;
+            opacity: 0;
+            transform: translateY(15px);
+            animation: tileFadeIn 1s ease forwards 0.2s;
+            color: #e0e0e0;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+        }
+
+        .splash-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--accent);
+            letter-spacing: 6px;
+            margin: 0;
+            opacity: 0;
+            transform: scale(0.9);
+            animation: titleZoomIn 0.8s ease forwards 0.5s;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.8), 0 0 15px rgba(212, 175, 55, 0.5);
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, #997a15 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .splash-sub {
+            font-size: 0.85rem;
+            color: #888;
+            letter-spacing: 3px;
+            margin-top: 8px;
+            opacity: 0;
+            animation: tileFadeIn 1s ease forwards 0.8s;
+        }
+
+        @keyframes tileFadeIn {
+            to { opacity: 0.9; transform: translateY(0); }
+        }
+        @keyframes titleZoomIn {
+            to { opacity: 1; transform: scale(1); }
         }
 
         /* Header & Icon */
@@ -80,7 +142,6 @@
         }
         select { width: 100%; }
 
-        /* スコア入力用コンテナ (00点固定表示用) */
         .score-input-wrap {
             display: flex;
             align-items: center;
@@ -151,18 +212,13 @@
         /* Rule Config Inputs */
         .rule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         
-        /* ウマのレイアウト */
         .uma-wrapper {
             display: grid;
             gap: 8px;
             margin-top: 6px;
         }
-        .uma-wrapper.uma-4 {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        .uma-wrapper.uma-3 {
-            grid-template-columns: repeat(3, 1fr);
-        }
+        .uma-wrapper.uma-4 { grid-template-columns: repeat(2, 1fr); }
+        .uma-wrapper.uma-3 { grid-template-columns: repeat(3, 1fr); }
         .uma-box {
             display: flex;
             align-items: center;
@@ -186,9 +242,7 @@
             width: 100%;
             font-size: 0.95rem;
         }
-        .uma-box input:focus {
-            outline: none;
-        }
+        .uma-box input:focus { outline: none; }
 
         /* History Accordion */
         .history-item {
@@ -224,8 +278,15 @@
 </head>
 <body>
 
+<!-- 🀄 スプラッシュ画面 -->
+<div id="splash-screen">
+    <div class="splash-tiles">🀀 🀁 🀂 🀃 🀅 🀆 🀄</div>
+    <h1 class="splash-title">松雀</h1>
+    <div class="splash-sub">MAHJONG SCORE COUNTER</div>
+</div>
+
 <header>
-    <img src="icon.png?v=104" class="logo-img" alt="logo" onerror="this.style.display='none'">
+    <img src="icon.png?v=105" class="logo-img" alt="logo" onerror="this.style.display='none'">
     <h1>松雀</h1>
 </header>
 
@@ -277,9 +338,7 @@
     <!-- 3. スコア入力 -->
     <section class="card">
         <h2>スコア入力 <span style="font-size:0.75rem; font-weight:normal; color:#aaa;">(例: 250 ➔ 25,000点)</span></h2>
-        <div id="scoreInputs" class="grid-inputs">
-            <!-- JSで動的に生成 -->
-        </div>
+        <div id="scoreInputs" class="grid-inputs"></div>
         <div style="margin-top: 15px;">
             <div id="totalPointsDisplay" style="text-align: right; font-size: 0.9rem; margin-bottom: 10px;">
                 合計: <span id="currentTotalPoints">0</span> / <span id="targetTotalPoints">100,000</span> 点
@@ -531,10 +590,8 @@
     }
 
     function renderAll() {
-        // 全体の総対局数
         const totalGamesCount = state.history.length;
 
-        // 各メンバーの参加数を集計
         const stats = {};
         state.history.forEach(h => {
             h.results.forEach(r => {
@@ -545,7 +602,6 @@
             });
         });
 
-        // メンバー管理リストの描画
         const mList = document.getElementById('memberList');
         mList.innerHTML = state.members.map(m => {
             const memberCount = stats[m.name] ? stats[m.name].count : 0;
@@ -560,7 +616,6 @@
         syncRuleUI();
         renderScoreInputs();
 
-        // トータル成績テーブルの描画
         const statsBody = document.querySelector('#statsTable tbody');
         const sortedStats = Object.keys(stats).sort((a, b) => stats[b].pt - stats[a].pt);
         
@@ -578,7 +633,6 @@
             `;
         }).join('');
 
-        // 対局履歴の描画
         const hList = document.getElementById('historyList');
         hList.innerHTML = state.history.map(h => `
             <div class="history-item" onclick="toggleDetails(${h.id}, event)">
@@ -606,6 +660,14 @@
 
     window.onload = () => {
         loadData();
+
+        // 🀄 起動アニメーション用処理 (1.8秒後に消去)
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            if (splash) {
+                splash.classList.add('hidden');
+            }
+        }, 1800);
     };
 </script>
 
