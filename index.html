@@ -16,13 +16,13 @@
 
     <style>
         :root {
-            --primary: #004d40; /* 深緑 */
-            --accent: #d4af37;  /* ゴールド */
-            --bg: #121212;
-            --card-bg: #1e1e1e;
+            --primary: #004d40;
+            --accent: #ffd700;  /* ネオンゴールド */
+            --bg: #0a0a0c;       /* サイバーダーク */
+            --card-bg: #141418;
             --text: #e0e0e0;
-            --danger: #cf6679;
-            --success: #03dac6;
+            --danger: #ff5252;
+            --success: #00e676;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -63,7 +63,7 @@
             transform: translateY(15px);
             animation: tileFadeIn 1.2s ease forwards 0.2s;
             color: #e0e0e0;
-            text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
         }
 
         .splash-title {
@@ -75,7 +75,7 @@
             opacity: 0;
             transform: scale(0.9);
             animation: titleZoomIn 1s ease forwards 0.6s;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.8), 0 0 15px rgba(212, 175, 55, 0.5);
+            text-shadow: 0 4px 20px rgba(0,0,0,0.8), 0 0 15px rgba(255, 215, 0, 0.5);
             background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, #997a15 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -99,43 +99,40 @@
 
         /* 🀄 案2: Mリーグ風・サイバーネオンヘッダー */
         header {
-            background: #141417;
-            padding: 16px 20px 14px 20px;
+            background: linear-gradient(180deg, #181820 0%, #0a0a0d 100%);
+            padding: 18px 20px 14px 20px;
             text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
-            border-bottom: 2px solid #d4af37;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.9);
+            border-bottom: 2px solid #ffd700;
             position: relative;
-            overflow: hidden;
         }
 
-        /* 左右を締め付けるスポーティな光ライン */
+        /* ネオンゴールドの光線ライン */
         header::after {
             content: '';
             position: absolute;
-            bottom: 0;
+            bottom: -2px;
             left: 0;
             width: 100%;
-            height: 1px;
-            background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
-            box-shadow: 0 0 8px var(--accent);
+            height: 2px;
+            background: #ffd700;
+            box-shadow: 0 0 12px #ffd700, 0 0 20px #ffd700;
         }
 
         .header-inner {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 14px;
-            position: relative;
-            z-index: 1;
+            gap: 12px;
         }
 
         .logo-img {
-            width: 46px;
-            height: 46px;
+            width: 44px;
+            height: 44px;
             border-radius: 8px;
             object-fit: cover;
-            border: 1px solid rgba(212, 175, 55, 0.6);
-            box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
+            border: 1.5px solid #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
         }
 
         .header-title-wrap {
@@ -152,38 +149,33 @@
 
         h1 {
             margin: 0;
-            font-size: 1.7rem;
+            font-size: 1.8rem;
             font-weight: 900;
-            letter-spacing: 4px;
-            color: #fff;
-            text-transform: uppercase;
-            background: linear-gradient(180deg, #ffffff 0%, #d4af37 100%);
+            letter-spacing: 3px;
+            background: linear-gradient(180deg, #ffffff 0%, #ffd700 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+            text-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
         }
 
-        /* PRO風のネオンバッジ */
+        /* ネオンPROバッジ */
         .cyber-badge {
-            font-size: 0.6rem;
+            font-size: 0.65rem;
             font-weight: 900;
-            color: #000;
-            background: var(--accent);
+            color: #0a0a0d;
+            background: #ffd700;
             padding: 2px 6px;
-            border-radius: 3px;
+            border-radius: 4px;
             letter-spacing: 1px;
-            line-height: 1;
-            box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
         }
 
         .header-sub-text {
             font-size: 0.65rem;
-            color: #d4af37;
+            color: #ffd700;
             letter-spacing: 3px;
-            margin-top: 1px;
-            font-weight: 700;
-            opacity: 0.8;
-            font-family: Impact, "Arial Black", sans-serif;
+            font-weight: 800;
+            opacity: 0.9;
         }
 
         .container { max-width: 600px; margin: 0 auto; padding: 15px; }
@@ -193,7 +185,8 @@
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid #22222a;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
         h2 { font-size: 1.1rem; margin-top: 0; border-left: 4px solid var(--accent); padding-left: 10px; }
@@ -202,8 +195,8 @@
         .form-group { margin-bottom: 15px; }
         label { display: block; font-size: 0.85rem; margin-bottom: 5px; color: #bbb; }
         select, input {
-            background: #2c2c2c;
-            border: 1px solid #444;
+            background: #1f1f26;
+            border: 1px solid #333340;
             color: #fff;
             padding: 12px;
             border-radius: 8px;
@@ -214,8 +207,8 @@
         .score-input-wrap {
             display: flex;
             align-items: center;
-            background: #2c2c2c;
-            border: 1px solid #444;
+            background: #1f1f26;
+            border: 1px solid #333340;
             border-radius: 8px;
             padding-right: 10px;
         }
@@ -254,11 +247,12 @@
         /* Members List */
         .member-tag {
             display: inline-block;
-            background: #333;
+            background: #252530;
             padding: 5px 12px;
             border-radius: 20px;
             margin: 0 5px 5px 0;
             font-size: 0.9rem;
+            border: 1px solid #3d3d4e;
         }
         .member-count {
             font-size: 0.75rem;
@@ -269,14 +263,14 @@
 
         /* Score Table */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
-        th, td { padding: 10px; text-align: center; border-bottom: 1px solid #333; }
+        th, td { padding: 10px; text-align: center; border-bottom: 1px solid #282833; }
         th { color: var(--accent); }
-        .pos-pt { color: var(--success); }
-        .neg-pt { color: var(--danger); }
+        .pos-pt { color: var(--success); font-weight: bold; }
+        .neg-pt { color: var(--danger); font-weight: bold; }
 
         /* Grid for Point Input */
         .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .input-item { background: #252525; padding: 10px; border-radius: 8px; }
+        .input-item { background: #1a1a22; padding: 10px; border-radius: 8px; border: 1px solid #282833; }
 
         /* Rule Config Inputs */
         .rule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
@@ -291,8 +285,8 @@
         .uma-box {
             display: flex;
             align-items: center;
-            background: #282828;
-            border: 1px solid #444;
+            background: #1f1f26;
+            border: 1px solid #333340;
             border-radius: 6px;
             padding: 4px 8px;
         }
@@ -315,7 +309,7 @@
 
         /* History Accordion */
         .history-item {
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #282833;
             padding: 12px 0;
             cursor: pointer;
         }
@@ -329,7 +323,7 @@
         .history-details {
             display: none;
             margin-top: 10px;
-            background: #282828;
+            background: #1f1f26;
             padding: 10px;
             border-radius: 8px;
             font-size: 0.85rem;
@@ -339,7 +333,7 @@
             display: flex;
             justify-content: space-between;
             padding: 3px 0;
-            border-bottom: 1px dashed #444;
+            border-bottom: 1px dashed #333340;
         }
         .detail-row:last-child { border-bottom: none; }
 
