@@ -11,8 +11,8 @@
     <meta name="apple-mobile-web-app-title" content="松雀">
     
     <!-- 強制読み込み用バージョン付きアイコン設定 -->
-    <link rel="apple-touch-icon" href="icon.png?v=103">
-    <link rel="icon" href="icon.png?v=103">
+    <link rel="apple-touch-icon" href="icon.png?v=104">
+    <link rel="icon" href="icon.png?v=104">
 
     <style>
         :root {
@@ -130,6 +130,11 @@
             margin: 0 5px 5px 0;
             font-size: 0.9rem;
         }
+        .member-count {
+            font-size: 0.75rem;
+            color: var(--accent);
+            margin-left: 4px;
+        }
         .remove-btn { color: var(--danger); margin-left: 8px; cursor: pointer; }
 
         /* Score Table */
@@ -220,7 +225,7 @@
 <body>
 
 <header>
-    <img src="icon.png?v=103" class="logo-img" alt="logo" onerror="this.style.display='none'">
+    <img src="icon.png?v=104" class="logo-img" alt="logo" onerror="this.style.display='none'">
     <h1>松雀</h1>
 </header>
 
@@ -291,7 +296,8 @@
                 <thead>
                     <tr>
                         <th>名前</th>
-                        <th>対局数</th>
+                        <th>参加数</th>
+                        <th>参加率</th>
                         <th>累計pt</th>
                         <th>平均順位</th>
                     </tr>
@@ -525,17 +531,11 @@
     }
 
     function renderAll() {
-        const mList = document.getElementById('memberList');
-        mList.innerHTML = state.members.map(m => `
-            <span class="member-tag">${m.name}<span class="remove-btn" onclick="removeMember(${m.id})">×</span></span>
-        `).join('');
+        // 全体の総対局数
+        const totalGamesCount = state.history.length;
 
-        syncRuleUI();
-        renderScoreInputs();
-
-        const statsBody = document.querySelector('#statsTable tbody');
+        // 各メンバーの参加数を集計
         const stats = {};
-        
         state.history.forEach(h => {
             h.results.forEach(r => {
                 if (!stats[r.name]) stats[r.name] = { count: 0, pt: 0, rankSum: 0 };
@@ -545,19 +545,40 @@
             });
         });
 
+        // メンバー管理リストの描画
+        const mList = document.getElementById('memberList');
+        mList.innerHTML = state.members.map(m => {
+            const memberCount = stats[m.name] ? stats[m.name].count : 0;
+            return `
+                <span class="member-tag">
+                    ${m.name}<span class="member-count">(${memberCount}試合)</span>
+                    <span class="remove-btn" onclick="removeMember(${m.id})">×</span>
+                </span>
+            `;
+        }).join('');
+
+        syncRuleUI();
+        renderScoreInputs();
+
+        // トータル成績テーブルの描画
+        const statsBody = document.querySelector('#statsTable tbody');
         const sortedStats = Object.keys(stats).sort((a, b) => stats[b].pt - stats[a].pt);
+        
         statsBody.innerHTML = sortedStats.map(name => {
             const s = stats[name];
+            const rate = totalGamesCount > 0 ? ((s.count / totalGamesCount) * 100).toFixed(0) : 0;
             return `
                 <tr>
                     <td>${name}</td>
-                    <td>${s.count}</td>
+                    <td>${s.count} / ${totalGamesCount}</td>
+                    <td>${rate}%</td>
                     <td class="${s.pt >= 0 ? 'pos-pt' : 'neg-pt'}">${s.pt.toFixed(1)}</td>
                     <td>${(s.rankSum / s.count).toFixed(2)}</td>
                 </tr>
             `;
         }).join('');
 
+        // 対局履歴の描画
         const hList = document.getElementById('historyList');
         hList.innerHTML = state.history.map(h => `
             <div class="history-item" onclick="toggleDetails(${h.id}, event)">
