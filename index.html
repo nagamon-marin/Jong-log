@@ -11,8 +11,8 @@
     <meta name="apple-mobile-web-app-title" content="松雀">
     
     <!-- アイコン設定 -->
-    <link rel="apple-touch-icon" href="icon.png?v=107">
-    <link rel="icon" href="icon.png?v=107">
+    <link rel="apple-touch-icon" href="icon.png?v=108">
+    <link rel="icon" href="icon.png?v=108">
 
     <style>
         :root {
@@ -43,9 +43,6 @@
             width: 100vw;
             height: 100vh;
             background: radial-gradient(circle at center, #1b3d2f 0%, #0a0a0a 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
             z-index: 9999;
             transition: opacity 0.8s ease, visibility 0.8s ease;
         }
@@ -54,12 +51,15 @@
             visibility: hidden;
         }
 
+        /* 画面中央に完全配置 */
         .splash-container {
-            position: relative;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             width: 280px;
             height: 280px;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
         }
@@ -77,38 +77,45 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--accent);
-            text-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
-            margin: -0.75rem 0 0 -0.75rem; /* 位置合わせ */
-            width: 1.5rem;
-            height: 1.5rem;
-            line-height: 1.5rem;
-            text-align: center;
+            margin: -1rem 0 0 -0.85rem; /* 牌の中心を回転軸に合わせる */
+            width: 1.7rem;
+            height: 2rem;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        /* 「白」用の白板デザイン（文字なし枠線） */
-        .tile-haku {
-            width: 1.2rem;
-            height: 1.5rem;
+        /* 全字牌共通の長方形枠（麻雀牌風） */
+        .tile-box {
+            width: 100%;
+            height: 100%;
             border: 2px solid var(--accent);
-            border-radius: 3px;
-            box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
-            background: rgba(212, 175, 55, 0.05);
+            border-radius: 4px;
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+            background: rgba(20, 20, 20, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent);
+            text-shadow: 0 0 6px rgba(212, 175, 55, 0.6);
+            line-height: 1;
+        }
+
+        /* 白（文字なし枠のみ） */
+        .tile-box.haku {
+            background: rgba(212, 175, 55, 0.08);
         }
 
         /* 7等分（約51.4度刻み）で円形に配置 */
-        .ring-tile:nth-child(1) { transform: rotate(0deg) translate(110px) rotate(0deg); }
-        .ring-tile:nth-child(2) { transform: rotate(51.4deg) translate(110px) rotate(-51.4deg); }
-        .ring-tile:nth-child(3) { transform: rotate(102.8deg) translate(110px) rotate(-102.8deg); }
-        .ring-tile:nth-child(4) { transform: rotate(154.2deg) translate(110px) rotate(-154.2deg); }
-        .ring-tile:nth-child(5) { transform: rotate(205.6deg) translate(110px) rotate(-205.6deg); }
-        .ring-tile:nth-child(6) { transform: rotate(257deg) translate(110px) rotate(-257deg); }
-        .ring-tile:nth-child(7) { transform: rotate(308.4deg) translate(110px) rotate(-308.4deg); }
+        .ring-tile:nth-child(1) { transform: rotate(0deg) translate(115px) rotate(0deg); }
+        .ring-tile:nth-child(2) { transform: rotate(51.4deg) translate(115px) rotate(-51.4deg); }
+        .ring-tile:nth-child(3) { transform: rotate(102.8deg) translate(115px) rotate(-102.8deg); }
+        .ring-tile:nth-child(4) { transform: rotate(154.2deg) translate(115px) rotate(-154.2deg); }
+        .ring-tile:nth-child(5) { transform: rotate(205.6deg) translate(115px) rotate(-205.6deg); }
+        .ring-tile:nth-child(6) { transform: rotate(257deg) translate(115px) rotate(-257deg); }
+        .ring-tile:nth-child(7) { transform: rotate(308.4deg) translate(115px) rotate(-308.4deg); }
 
         /* タイトル・サブタイトル（中央配置） */
         .splash-center-content {
@@ -347,15 +354,15 @@
 <!-- 🀄 スプラッシュ画面 -->
 <div id="splash-screen">
     <div class="splash-container">
-        <!-- 円形に並んだ字牌7種（東・南・西・北・白[枠のみ]・發・中） -->
+        <!-- 円形に並んだ全枠付き字牌7種 -->
         <div class="tile-ring">
-            <span class="ring-tile">東</span>
-            <span class="ring-tile">南</span>
-            <span class="ring-tile">西</span>
-            <span class="ring-tile">北</span>
-            <span class="ring-tile"><span class="tile-haku"></span></span>
-            <span class="ring-tile">發</span>
-            <span class="ring-tile">中</span>
+            <span class="ring-tile"><span class="tile-box">東</span></span>
+            <span class="ring-tile"><span class="tile-box">南</span></span>
+            <span class="ring-tile"><span class="tile-box">西</span></span>
+            <span class="ring-tile"><span class="tile-box">北</span></span>
+            <span class="ring-tile"><span class="tile-box haku"></span></span>
+            <span class="ring-tile"><span class="tile-box">發</span></span>
+            <span class="ring-tile"><span class="tile-box">中</span></span>
         </div>
         <!-- 中央タイトル -->
         <div class="splash-center-content">
@@ -367,7 +374,7 @@
 
 <header>
     <div class="header-inner">
-        <img src="icon.png?v=107" class="logo-img" alt="logo" onerror="this.style.display='none'">
+        <img src="icon.png?v=108" class="logo-img" alt="logo" onerror="this.style.display='none'">
         <h1>松雀</h1>
     </div>
 </header>
