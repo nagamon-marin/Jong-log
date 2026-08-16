@@ -548,15 +548,14 @@
 
     let state = {
         tournaments: [
-            { id: 'all', name: '全対局（指定なし）' },
-            { id: 1, name: '第1回 松雀杯' }
+            { id: 'none', name: '大会なし（指定なし）' }
         ],
-        currentTournamentId: 1,
+        currentTournamentId: 'none',
         members: [], 
         history: [], 
         mode: 4,     
         rules: {
-            4: { start: 250, return: 300, uma: [30, 10, -10, -30], rounding: '56', yakitori: 10, yakitoriMode: 'split' },
+            4: { start: 250, return: 300, uma: [20, 10, -10, -20], rounding: '56', yakitori: 10, yakitoriMode: 'split' },
             3: { start: 350, return: 400, uma: [20, 0, -20], rounding: '56', yakitori: 10, yakitoriMode: 'split' }
         }
     };
@@ -604,13 +603,13 @@
     function changeTournament() {
         const sel = document.getElementById('currentTournamentSelect');
         const val = sel.value;
-        state.currentTournamentId = val === 'all' ? 'all' : parseInt(val);
+        state.currentTournamentId = val === 'none' ? 'none' : parseInt(val);
         saveData();
     }
 
     function deleteTournament() {
-        if (state.currentTournamentId === 'all') {
-            alert('「全対局（指定なし）」は削除できません');
+        if (state.currentTournamentId === 'none') {
+            alert('「大会なし（指定なし）」は削除できません');
             return;
         }
         const t = state.tournaments.find(x => x.id === state.currentTournamentId);
@@ -618,11 +617,11 @@
 
         state.history.forEach(h => {
             if (h.tournamentId === state.currentTournamentId) {
-                h.tournamentId = 'all';
+                h.tournamentId = 'none';
             }
         });
         state.tournaments = state.tournaments.filter(x => x.id !== state.currentTournamentId);
-        state.currentTournamentId = 'all';
+        state.currentTournamentId = 'none';
         saveData();
     }
 
@@ -893,11 +892,11 @@
 
         // トータル成績の見出し変更
         const currentT = state.tournaments.find(t => t.id === state.currentTournamentId);
-        document.getElementById('statsTournamentName').innerText = currentT ? `[ ${currentT.name} ]` : '';
+        document.getElementById('statsTournamentName').innerText = (currentT && currentT.id !== 'none') ? `[ ${currentT.name} ]` : '';
 
-        // 選択された大会の対局のみフィルタリングして集計（'all' の場合は全対局）
+        // 選択された大会の対局のみフィルタリングして集計（'none' の場合は全対局）
         const filteredHistory = state.history.filter(h => {
-            if (state.currentTournamentId === 'all') return true;
+            if (state.currentTournamentId === 'none') return true;
             return h.tournamentId === state.currentTournamentId;
         });
 
@@ -950,7 +949,8 @@
         const hList = document.getElementById('historyList');
         hList.innerHTML = state.history.map(h => {
             const tObj = state.tournaments.find(t => t.id === h.tournamentId);
-            const tName = tObj ? tObj.name : '全対局（指定なし）';
+            // 大会が指定されていない場合（'none' または未定義）はバッジ表示を空欄（非表示）にする
+            const tournamentBadgeHtml = (tObj && tObj.id !== 'none') ? `<span class="tournament-badge">${tObj.name}</span>` : '';
             
             return `
             <div class="history-item" onclick="toggleDetails(${h.id}, event)">
@@ -958,7 +958,7 @@
                     <div>
                         <div class="history-info">
                             ${h.date} (${h.mode}人麻雀)
-                            <span class="tournament-badge">${tName}</span>
+                            ${tournamentBadgeHtml}
                         </div>
                         <div class="history-scores">
                             ${h.results.map(r => `${r.name}(${r.pt > 0 ? '+' : ''}${r.pt})${r.isYakitori ? '🍗' : ''}`).join(' ')}
